@@ -1,0 +1,1 @@
+chrome.devtools.panels.create('Nigger Panel', null, 'panel.html', (panel) => {});
