@@ -1,1 +1,1 @@
-chrome.devtools.panels.create('Nigger Panel', null, 'panel.html', (panel) => {});
+chrome.devtools.panels.create('Test Panel', null, 'panel.html', (panel) => {});
