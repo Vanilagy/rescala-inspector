@@ -1,12 +1,11 @@
 {
-    "name": "Hello Extensions",
-    "description": "Base-level extension",
+    "name": "REScala inspector",
+    "description": "Amazing description",
     "version": "1.0.0",
     "manifest_version": 3,
     "action": {
-        "default_popup": "hello.html",
-        "default_icon": "rescala_logo.png",
-        "default_title": "REScala debugger"
+        "default_icon": "assets/rescala_logo.png",
+        "default_title": "REScala inspector"
     },
-    "devtools_page": "hello.html"
+    "devtools_page": "devtools.html"
 }

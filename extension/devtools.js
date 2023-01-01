@@ -1,0 +1,1 @@
+chrome.devtools.panels.create('REScala Inspector', null, 'panel.html', (panel) => {});
