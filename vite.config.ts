@@ -6,6 +6,7 @@ import watch from "rollup-plugin-watch";
 
 export default defineConfig({
     root: 'extension',
+    base: '',
     build: {
         outDir: join(__dirname, 'dist'),
         emptyOutDir: true,
