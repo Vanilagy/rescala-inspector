@@ -11,7 +11,7 @@
     let innerHeight = window.innerHeight;
     let spacePressed = false;
     let mouseHeld = false;
-    let scale = 0.3;
+    let scale = 0.8;
     let originX = 200 / scale;
     let originY = 100 / scale;
     let doIterate = false;
@@ -113,10 +113,10 @@
         edge.to.in.push(edge.from);
     }
 
-    let sortedNodes = [...nodes].sort((a, b) => a.layer - b.layer);
-    for (let node of sortedNodes) node.x = Infinity;
+    for (let node of nodes) node.x = Infinity;
     
-    for (let layer = 0; layer <= sortedNodes.at(-1).layer; layer++) {
+    let highestLayer = Math.max(...nodes.map(x => x.layer));
+    for (let layer = 0; layer <= highestLayer; layer++) {
         let deezNodes = nodes.filter(x => x.layer === layer);
         if (layer === 0) {
             deezNodes.forEach((x, i) => x.x = i);
@@ -133,10 +133,9 @@
         }
     }
 
-    sortedNodes.sort((a, b) => a.x - b.x);
-    let ayo = [...sortedNodes].sort((a, b) => a.x - b.x).sort((a, b) => a.layer - b.layer);
+    let sortedNodes = [...nodes].sort((a, b) => a.x - b.x).sort((a, b) => a.layer - b.layer);
     for (let node of nodes) {
-        node.neighbor = ayo.find((x, i) => x.layer === node.layer && i > ayo.indexOf(node));
+        node.neighbor = sortedNodes.find((x, i) => x.layer === node.layer && i > sortedNodes.indexOf(node));
     }
 
     const computeDx = () => {
@@ -148,7 +147,7 @@
             edge.from.dx -= (edge.from.x - edge.to.x) / 2;
         }
 
-        for (let node of ayo) {
+        for (let node of nodes) {
             if (!node.neighbor) continue;
             if (did.has(node)) continue;
 
@@ -194,7 +193,7 @@
     };
 
     const getNodePosition = (node: Node, center = false) => {
-        let x = 300 * node.layer;
+        let x = 300 * (highestLayer - node.layer);
         let y = 100 * node.x;
 
         if (center) {
@@ -226,15 +225,6 @@
             let pos = getNodePosition(node);
             drawNode(pos.x, pos.y, node.value ?? node.label, `${node.x.toFixed(2)} ${node.dx?.toFixed(2)}` ?? node.value);
         }
-        /*
-
-        drawEdge(300+7, 235, 500-7, 335);
-        drawEdge(300+7, 235, 700-7, 135);
-
-        drawNode(200, 200);
-        drawNode(500, 300);
-        drawNode(700, 100);
-        */
 
         requestAnimationFrame(render);
     };
@@ -295,33 +285,28 @@
             y: centerY + y
         };
     }
-    
-    const quadraticBezierDerivative = (p0: number, p1: number, p2: number, t: number) => {
-        return 2*(1-t)*(p1-p0) + 2*t*(p2-p1);
-    };
 
     const drawEdge = (edge: Edge, n = 0) => {
         if (edge.from.value === 'dummy') return;
 
-        if (edge.to.value === 'dummy') {
-            let allPaths: Node[][] = [[edge.from, edge.to]];
+        if (edge.to.value !== 'dummy') {
+            let p1 = getNodePosition(edge.from);
+            let p2 = getNodePosition(edge.to);
 
-            while (allPaths.some(x => x.at(-1).value === 'dummy')) {
-                for (let path of allPaths.slice()) {
-                    if (path.at(-1).value === 'dummy') {
-                        let outgoingEdges = edges.filter(x => x.from === path.at(-1));
-                        let mutated = false;
-                        for (let edge of outgoingEdges) {
-                            if (!mutated) {
-                                path.push(edge.to);
-                                mutated = true;
-                            } else {
-                                allPaths.push([...path, edge.to]);
-                            }
-                        }
-                    }
-                }
-            }
+            let angle = Math.atan2(p2.y-p1.y, p2.x-p1.x) * 0.8; // Dampen the angle a bit
+
+            ctx.beginPath();
+            
+            let { x: x1, y: y1 } = getPosAroundNode(p1.x, p1.y, angle);
+            let { x: x2, y: y2 } = getPosAroundNode(p2.x, p2.y, Math.PI + angle);
+
+            ctx.moveTo(x1, y1);
+            ctx.quadraticCurveTo((x1+x2)/2, y2, x2, y2);
+
+            drawArrow(n, x2, y2, 0);
+        } else {
+            let path = [edge.from, edge.to];
+            while (path.at(-1).value === 'dummy') path.push(path.at(-1).out[0]);
 
             const catmullRom = (t: number, p0: number, p1: number, p2: number, p3: number) => {
                 let point = t*t*t*((-1) * p0 + 3 * p1 - 3 * p2 + p3) / 2;
@@ -332,155 +317,59 @@
                 return point;
             };
 
-            for (let path of allPaths) {
-                let points: { x: number, y: number }[] = [];
+            let points: { x: number, y: number }[] = [];
 
-                for (let i = 0; i < path.length-1; i++) {
-                    let from = path[i];
-                    let to = path[i+1];
+            for (let i = 0; i < path.length-1; i++) {
+                let from = path[i];
+                let to = path[i+1];
 
-                    let p1 = getNodePosition(from, true);
-                    let p2 = getNodePosition(to, true);
-                    let angle = Math.atan2(p2.y-p1.y, p2.x-p1.x);
+                let p1 = getNodePosition(from, true);
+                let p2 = getNodePosition(to, true);
+                let angle = Math.atan2(p2.y-p1.y, p2.x-p1.x);
 
-                    if (from.value !== 'dummy') p1 = getPosAroundNode(getNodePosition(from).x, getNodePosition(from).y, angle);
-                    if (to.value !== 'dummy') p2 = getPosAroundNode(getNodePosition(to).x, getNodePosition(to).y, Math.PI + angle);
+                if (from.value !== 'dummy') p1 = getPosAroundNode(getNodePosition(from).x, getNodePosition(from).y, angle);
+                if (to.value !== 'dummy') p2 = getPosAroundNode(getNodePosition(to).x, getNodePosition(to).y, Math.PI + angle);
 
-                    //if (i === 0) ctx.moveTo(p1.x, p1.y);
-                    //ctx.lineTo(p2.x, p2.y);
-
-                    if (i === 0) points.push(p1);
-                    points.push(p2);
-                }
-
-                points.unshift({
-                    x: points[0].x - (points[1].x - points[0].x),
-                    y: points[0].y - (points[1].y - points[0].y)
-                });
-                points.push({
-                    x: points.at(-1).x - (points.at(-2).x - points.at(-1).x),
-                    y: points.at(-1).y - (points.at(-2).y - points.at(-1).y)
-                });
-
-                ctx.beginPath();
-                ctx.moveTo(points[1].x, points[1].y);
-                let lastX = points[1].x;
-                let lastY = points[1].y;
-                let angle: number;
-                for (let i = 0; i < points.length-3; i++) {
-                    let p0 = points[i+0];
-                    let p1 = points[i+1];
-                    let p2 = points[i+2];
-                    let p3 = points[i+3];
-                
-                    for (let t = 0; t <= 1 + Number.EPSILON; t += 0.05) {
-                        let x = catmullRom(t, p0.x, p1.x, p2.x, p3.x);
-                        let y = catmullRom(t, p0.y, p1.y, p2.y, p3.y);
-                        ctx.lineTo(x, y);
-
-                        angle = Math.atan2(y-lastY, x-lastX);
-                        lastX = x;
-                        lastY = y;
-                    }
-                }
-
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = `hsl(${100 + 50 * n}, 60%, 60%)`;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                ctx.stroke();
-
-                ctx.save();
-                ctx.translate(points.at(-2).x, points.at(-2).y);
-                ctx.rotate(angle);
-
-                ctx.beginPath();
-                ctx.moveTo(-7, -5);
-                ctx.lineTo(0, 0);
-                ctx.lineTo(-7, 5);
-                ctx.stroke();
-
-                ctx.restore();
+                if (i === 0) points.push(p1);
+                points.push(p2);
             }
 
-            return; 
-        }
+            points.unshift({
+                x: points[0].x - (points[1].x - points[0].x),
+                y: points[0].y - (points[1].y - points[0].y)
+            });
+            points.push({
+                x: points.at(-1).x - (points.at(-2).x - points.at(-1).x),
+                y: points.at(-1).y - (points.at(-2).y - points.at(-1).y)
+            });
 
-        let p1 = getNodePosition(edge.from);
-        let p2 = getNodePosition(edge.to);
+            ctx.beginPath();
+            ctx.moveTo(points[1].x, points[1].y);
+            let lastX = points[1].x;
+            let lastY = points[1].y;
+            let angle: number;
+            for (let i = 0; i < points.length-3; i++) {
+                let p0 = points[i+0];
+                let p1 = points[i+1];
+                let p2 = points[i+2];
+                let p3 = points[i+3];
+            
+                for (let t = 0; t <= 1 + Number.EPSILON; t += 0.05) {
+                    let x = catmullRom(t, p0.x, p1.x, p2.x, p3.x);
+                    let y = catmullRom(t, p0.y, p1.y, p2.y, p3.y);
+                    ctx.lineTo(x, y);
 
-        let angle = 0;
-        let ex: number;
-        let ey: number;
-
-        ctx.beginPath();
-        
-        const bezierPathFromNode = (node: Node, x2: number, y2: number, angleOverride?: number, computeControlPoints?: (x1: number, x2: number) => { cx: number, cy: number }) => {
-            let p = getNodePosition(node);
-            let { x: x1, y: y1 } = getPosAroundNode(p.x, p.y, 0);
-            let cx = (x1+x2)/2;
-            let cy = y2;
-            let angle = 0;
-
-            for (let i = 0; i < 3; i++) {
-                cx = (x1+x2)/2;
-                cy = y2;
-
-                if (computeControlPoints) ({ cx, cy } = computeControlPoints(x1, x2));
-
-                angle = angleOverride ?? Math.atan2(
-                    quadraticBezierDerivative(y1, cy, y2, 0),
-                    quadraticBezierDerivative(x1, cx, x2, 0)
-                );
-                ({ x: x1, y: y1 } = getPosAroundNode(p.x, p.y, angle));
+                    angle = Math.atan2(y-lastY, x-lastX);
+                    lastX = x;
+                    lastY = y;
+                }
             }
 
-            //ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.quadraticCurveTo(cx, cy, x2, y2);
-
-            return {
-                x: x1,
-                y: y1,
-                startAngle: Math.atan2(
-                    quadraticBezierDerivative(y1, cy, y2, 0),
-                    quadraticBezierDerivative(x1, cx, x2, 0)
-                ),
-                endAngle: Math.atan2(
-                    quadraticBezierDerivative(y1, cy, y2, 1),
-                    quadraticBezierDerivative(x1, cx, x2, 1)
-                )
-            };
-        };
-
-        let { x: x1, y: y1 } = getPosAroundNode(p1.x, p1.y, 0);
-        let { x: x2, y: y2 } = getPosAroundNode(p2.x, p2.y, Math.PI);
-
-        //ctx.beginPath();
-        //ctx.moveTo(x1, y1);
-        //ctx.bezierCurveTo(x1+100, y1, x2-100, y2, x2 - 7, y2);
-
-        angle = Math.atan2(y2-y1, x2-x1);
-
-        ({ x: x2, y: y2 } = getPosAroundNode(p2.x, p2.y, Math.PI + angle));
-
-        let bruh: any;
-        if (edge.to.layer - edge.from.layer > 1) {
-            let highwayHeight = Math.max(...nodes.filter(x => edge.from.layer < x.layer && x.layer < edge.to.layer).map(x => x.x)) + 1.25;
-            bruh = (x1, x2) => ({ cx: (x1+x2)/2, cy: 150 * highwayHeight });
+            drawArrow(n, points.at(-2).x, points.at(-2).y, angle);
         }
+    };
 
-        let res = bezierPathFromNode(edge.from, x2, y2, undefined, bruh);
-
-        ex = x2;
-        ey = y2;
-        angle = res.endAngle;
-
-        //let angle = Math.atan2(y2-y1, x2-x1);
-
-        
-        //ctx.lineTo(x2 - 7*Math.cos(angle), y2 - 7*Math.sin(angle));
-
+    const drawArrow = (n: number, endX: number, endY: number, endAngle: number) => {
         ctx.lineWidth = 2;
         ctx.strokeStyle = `hsl(${100 + 50 * n}, 60%, 60%)`;
         ctx.lineCap = 'round';
@@ -488,8 +377,8 @@
         ctx.stroke();
 
         ctx.save();
-        ctx.translate(ex, ey);
-        ctx.rotate(angle);
+        ctx.translate(endX, endY);
+        ctx.rotate(endAngle);
 
         ctx.beginPath();
         ctx.moveTo(-7, -5);
