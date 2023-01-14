@@ -53,41 +53,7 @@
     let n8: Node = { label: 'username', value: '"8"' };
     let n9: Node = { label: 'username', value: '"9"' };
     let nodes = [n1, n2, n3, n4, n5, n6, n7, n8, n9];
-    let edges: Edge[] = [
-        //{ from: n1, to: n2 },
-        //{ from: n2, to: n3 },
-        //{ from: n4, to: n3 },
-        //{ from: n4, to: n2 },
-        //{ from: n1, to: n4 },
-        //{ from: n5, to: n4 },
-        //{ from: n5, to: n3 },
-
-        //{ from: n1, to: n3 },
-        //{ from: n2, to: n3 },
-        //{ from: n4, to: n6 },
-        //{ from: n5, to: n6 },
-
-        { from: n1, to: n2 },
-        { from: n2, to: n3 },
-
-        { from: n4, to: n1 },
-        { from: n5, to: n2 },
-        { from: n6, to: n3 },
-
-        { from: n4, to: n5 },
-        { from: n5, to: n6 },
-
-        { from: n7, to: n4 },
-        { from: n8, to: n5 },
-        { from: n9, to: n6 },
-
-        { from: n7, to: n8 },
-        { from: n8, to: n9 },
-
-        //{ from: n1, to: n2 },
-        //{ from: n2, to: n3 },
-        //{ from: n1, to: n3 },
-    ];
+    let edges: Edge[] = [];
 
     function shuffle<T>(a: T[]) {
         for (let i = a.length - 1; i > 0; i--) {
@@ -104,71 +70,8 @@
         for (let to of availableNodes.slice(0, connections)) edges.push({ from: node, to: to });
     }
 
-    
-    /*
-    nodes = [n1, n2, n3, n4, n5, n6];
-    edges = [
-        { from: n1, to: n2 },
-        { from: n2, to: n3 },
-        //{ from: n3, to: n4 },
-        //{ from: n1, to: n3 },
-        { from: n1, to: n4 },
-        { from: n4, to: n3 },
-        { from: n5, to: n6 },
-        //{ from: n1, to: n3 },
-    ]
-    */
-    
-
-    /*
-    edges = [
-        { from: n2, to: n1 },
-        { from: n3, to: n1 },
-        { from: n5, to: n4 },
-    ]
-    */
-
-    /*
-    nodes = [
-        n1, n2, n3, n4, n5
-    ];
-    edges = [
-        { from: n1, to: n2 },
-        { from: n3, to: n5 },
-    ];
-    */
-
-    //nodes = nodes.filter(x => edges.some(y => y.from === x || y.to === x));
-
-    /*
-    while (true) {
-        let did = false;
-        for (let edge of edges) {
-            let others = edges.filter(x => x.from === edge.to);
-            for (let edge2 of others) {
-                if (!edges.some(x => x.from === edge.from && x.to === edge2.to)) {
-                    edges.push({ from: edge.from, to: edge2.to });
-                    did = true;
-                }
-            }
-        }
-        if (!did) break;
-    }*/
-
-    let longestOutgoingPathCache = new Map<Node, number>();
-    const longestOutgoingPath = (node: Node) => {
-        if (longestOutgoingPathCache.has(node)) return longestOutgoingPathCache.get(node);
-        let relevantEdges = edges.filter(x => x.from === node);
-        let res: number;
-
-        if (relevantEdges.length === 0) res = 0;
-        else res = Math.max(...relevantEdges.map(x => longestOutgoingPath(x.to))) + 1;
-
-        longestOutgoingPathCache.set(node, res);
-        return res;
-    };
-
-    //for (let node of nodes) node.layer = longestOutgoingPath(node);
+    // Remove unconnected nodes
+    nodes = nodes.filter(x => edges.some(y => y.from === x || y.to === x));
 
     for (let node of nodes) node.layer = 0;
     let q: Node[] = nodes.filter(x => !edges.some(y => y.to === x));
@@ -236,21 +139,7 @@
         node.neighbor = ayo.find((x, i) => x.layer === node.layer && i > ayo.indexOf(node));
     }
 
-    const fixCollisions = () => {
-        for (let i = 0; i < 10; i++) for (let node of nodes) {
-            if (!node.neighbor) continue;
-
-            let nodeHeight = node.value === 'dummy' ? 0.5 : 1;
-            let neighborHeight = node.neighbor.value === 'dummy' ? 0.25 : 0.5;
-
-            let diff = Math.min(node.neighbor.x - (node.x + nodeHeight), 0) / 2;
-
-            node.x += diff;
-            node.neighbor.x -= diff;
-        }
-    };
-
-    const computeDxNew = () => {
+    const computeDx = () => {
         let did = new Set<Node>();
 
         for (let node of nodes) node.dx = 0;
@@ -289,13 +178,13 @@
         }
     };
 
-    const iterateNewNew = () => {
+    const iterateNew = () => {
         let h = 0.8;
 
         console.time()
         for (let i = 0; i < 1000; i++) {
             let x = nodes.map(n => n.x);
-            computeDxNew();
+            computeDx();
             nodes.forEach(n => n.x += h**2 * n.dx / 2);
 
             let highestDx = Math.max(...nodes.map((n, i) => Math.abs(x[i] - n.x)));
@@ -303,126 +192,6 @@
         }
         console.timeEnd()
     };
-
-    const iterateNew = () => {
-        console.time()
-        while (true) {
-            let h = 1;
-            let x = nodes.map(n => n.x);
-
-            computeDxNew();
-            let k1 = nodes.map(n => n.dx);
-
-            nodes.forEach((n, i) => n.x = x[i] + h**2 *k1[i]/2/2);
-            computeDxNew();
-            let k2 = nodes.map(n => n.dx);
-
-            nodes.forEach((n, i) => n.x = x[i] + h**2 *k2[i]/2/2);
-            computeDxNew();
-            let k3 = nodes.map(n => n.dx);
-            
-            nodes.forEach((n, i) => n.x = x[i] + h**2 *k3[i]/2);
-            computeDxNew();
-            let k4 = nodes.map(n => n.dx);
-
-            let k = nodes.map((_, i) => (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) / 6);
-            nodes.forEach((n, i) => n.x = x[i] + h**2 * k[i] / 2);
-
-            let highestDx = Math.max(...nodes.map((n, i) => Math.abs(x[i] - n.x)));
-            if (true || highestDx < 0.001) break;
-        }
-        console.timeEnd()
-    }
-
-
-    const iterate = (collision = true, fromLayer?: number, iters = 100) => {
-        for (let iter = 0; iter < iters; iter++) {
-            let ayo = [...nodes].sort((a, b) => a.x - b.x).sort((a, b) => a.layer - b.layer);
-            let midX = (Math.max(...nodes.map(x => x.x)) + Math.min(...nodes.map(x => x.x))) / 2;// nodes.map(x => x.x).reduce((a, b) => a + b, 0) / nodes.length;
-
-            for (let node of nodes) node.dx = 0;
-            for (let edge of edges) {
-                if (fromLayer !== undefined && edge.from.layer !== fromLayer) continue;
-
-                edge.to.dx += 0.01 * (edge.from.x - edge.to.x) / 2;
-                edge.from.dx -= 0.01 * (edge.from.x - edge.to.x) / 2;
-            }
-
-            if (collision) for (let node of nodes) {
-                let neighbor = ayo.find((x, i) => x.layer === node.layer /*&& x.value !== 'dummy'*/ && i > ayo.indexOf(node));
-                if (neighbor) {
-                    let bro = (neighbor.value === 'dummy' || node.value === 'dummy') ? 0.75 : 1;
-                    node.dx += Math.min(neighbor.x - node.x - bro, 0) / 2;
-                    neighbor.dx -= Math.min(neighbor.x - node.x - bro, 0) / 2;
-                }
-            }
-            for (let node of nodes) node.x += node.dx;
-
-            let newMidX = (Math.max(...nodes.map(x => x.x)) + Math.min(...nodes.map(x => x.x))) / 2;
-            //for (let node of nodes) node.x -= newMidX - midX;
-        }
-
-        /*
-        let midX = (Math.max(...nodes.map(x => x.x)) + Math.min(...nodes.map(x => x.x))) / 2;
-        console.log(midX);
-        originY = (-100 * midX) * 0.4 + window.innerHeight;
-        */
-    };
-
-    /*
-    let highestLayer = -lowestLayer;
-    for (let i = 0; i < 100; i++) iterate(false);
-
-    let ayo = [...nodes].sort((a, b) => a.x - b.x);
-    for (let i = 0; i <= highestLayer; i++) {
-        let deezNodes = ayo.filter(x => x.layer === i);
-        deezNodes.forEach((x, i) => x.x = i * 1.25);
-    }
-    */
-
-
-
-
-    //for (let node of nodes) node.x *= 10;
-
-    /*
-
-    let sortedNodes = [...nodes].sort((a, b) => a.layer - b.layer);
-
-    //nodes.forEach(x => x.height = 0);
-    for (let [i, node] of sortedNodes.filter(x => x.layer === sortedNodes.at(-1).layer).entries()) {
-        node.height = i;
-    }
-
-    for (let depth = sortedNodes.at(-1).layer; depth >= 0; depth--) {
-        let ofThisDepth = sortedNodes.filter(x => x.layer === depth);
-
-        ofThisDepth.sort((a, b) => a.height - b.height);
-        let hasHeight = ofThisDepth.filter(x => x.height !== undefined);
-        let avgHeight = hasHeight.reduce((a, b) => a + b.height, 0) / hasHeight.length;
-
-        let lastHeight = -Infinity;
-        for (let [i, node] of [...hasHeight, ...ofThisDepth.filter(x => x.height === undefined)].entries()) {
-            if (node.height !== undefined) {
-                node.height /= edges.filter(x => x.from === node).length || 1;
-                node.height = avgHeight - (hasHeight.length-1)/2 + i;
-                lastHeight = node.height;
-            } else {
-                lastHeight++;
-                if (!isFinite(lastHeight)) lastHeight = 0
-                node.height = lastHeight;
-            }
-        }
-
-        for (let node of ofThisDepth) {
-            for (let edge of edges) {
-                if (edge.to !== node || edge.from.layer !== depth-1) continue;
-                if (!edge.from.height) edge.from.height = 0;
-                edge.from.height += node.height;
-            }
-        }
-    }
-    */
 
     const getNodePosition = (node: Node, center = false) => {
         let x = 300 * node.layer;
@@ -743,7 +512,7 @@
     on:keyup={(e) => e.code === 'Space' && (spacePressed = false)}
     on:mousedown={() => mouseHeld = true}
     on:mouseup={() => mouseHeld = false}
-    on:keydown={e => e.code === 'KeyI' && iterateNewNew()}
+    on:keydown={e => e.code === 'KeyI' && iterateNew()}
     on:keyup={e => e.code === 'KeyI' && (doIterate = false)}
 />
 
