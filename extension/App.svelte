@@ -11,7 +11,7 @@
     let innerHeight = window.innerHeight;
     let spacePressed = false;
     let mouseHeld = false;
-    let scale = 0.4;
+    let scale = 0.3;
     let originX = 200 / scale;
     let originY = 100 / scale;
     let doIterate = false;
@@ -22,7 +22,7 @@
     });
 
     const onMouseMove = (e: MouseEvent) => {
-        if (!spacePressed || !mouseHeld) return;
+        if (!spacePressed || !mouseHeld) return;
 
         originX += e.movementX; 
         originY += e.movementY;
@@ -33,7 +33,10 @@
         value: string,
         layer?: number,
         x?: number,
-        dx?: number
+        dx?: number,
+        in?: Node[],
+        out?: Node[],
+        neighbor?: Node,
     }
     type Edge = {
         from: Node,
@@ -93,7 +96,7 @@
         }
         return a;
     }
-    nodes = Array(25).fill(0).map((x, i): Node => ({ label: 'username', value: i.toString() }));
+    nodes = Array(10).fill(0).map((x, i): Node => ({ label: 'username', value: i.toString() }));
     edges = [];
     for (let [i, node] of nodes.entries()) {
         let availableNodes = shuffle(nodes.slice(i + 1));
@@ -125,7 +128,17 @@
     ]
     */
 
-    nodes = nodes.filter(x => edges.some(y => y.from === x || y.to === x));
+    /*
+    nodes = [
+        n1, n2, n3, n4, n5
+    ];
+    edges = [
+        { from: n1, to: n2 },
+        { from: n3, to: n5 },
+    ];
+    */
+
+    //nodes = nodes.filter(x => edges.some(y => y.from === x || y.to === x));
 
     /*
     while (true) {
@@ -188,17 +201,26 @@
         }
     }
 
+    for (let node of nodes) {
+        node.in = [];
+        node.out = [];
+    }
+    for (let edge of edges) {
+        edge.from.out.push(edge.to);
+        edge.to.in.push(edge.from);
+    }
+
     let sortedNodes = [...nodes].sort((a, b) => a.layer - b.layer);
     for (let node of sortedNodes) node.x = Infinity;
     
     for (let layer = 0; layer <= sortedNodes.at(-1).layer; layer++) {
         let deezNodes = nodes.filter(x => x.layer === layer);
-        if (true || layer === 0) {
-            deezNodes.forEach((x, i) => x.x = i * 1.25);
+        if (layer === 0) {
+            deezNodes.forEach((x, i) => x.x = i);
         } else {
-            deezNodes.forEach(x => x.x /= edges.filter(y => y.from === x).length);
+            deezNodes.forEach(x => x.x /= x.out.length);
             deezNodes.sort((a, b) => a.x - b.x);
-            deezNodes.forEach((x, i) => x.x = i * 1.25);
+            deezNodes.forEach((x, i) => x.x = i);
         }
 
         for (let edge of edges) {
@@ -208,8 +230,109 @@
         }
     }
 
-    console.log(sortedNodes)
+    sortedNodes.sort((a, b) => a.x - b.x);
+    let ayo = [...sortedNodes].sort((a, b) => a.x - b.x).sort((a, b) => a.layer - b.layer);
+    for (let node of nodes) {
+        node.neighbor = ayo.find((x, i) => x.layer === node.layer && i > ayo.indexOf(node));
+    }
 
+    const fixCollisions = () => {
+        for (let i = 0; i < 10; i++) for (let node of nodes) {
+            if (!node.neighbor) continue;
+
+            let nodeHeight = node.value === 'dummy' ? 0.5 : 1;
+            let neighborHeight = node.neighbor.value === 'dummy' ? 0.25 : 0.5;
+
+            let diff = Math.min(node.neighbor.x - (node.x + nodeHeight), 0) / 2;
+
+            node.x += diff;
+            node.neighbor.x -= diff;
+        }
+    };
+
+    const computeDxNew = () => {
+        let did = new Set<Node>();
+
+        for (let node of nodes) node.dx = 0;
+        for (let edge of edges) {
+            edge.to.dx += (edge.from.x - edge.to.x) / 2;
+            edge.from.dx -= (edge.from.x - edge.to.x) / 2;
+        }
+
+        for (let node of ayo) {
+            if (!node.neighbor) continue;
+            if (did.has(node)) continue;
+
+            const nodeHeight = (n: Node) => {
+                return n.value === 'dummy' ? 0.5 : 1;
+            };
+
+            let connected = [node];
+            while (connected.at(-1).neighbor && connected.at(-1).neighbor.x - (connected.at(-1).x + nodeHeight(connected.at(-1)) + 1e-6) <= 0) {
+                connected.push(connected.at(-1).neighbor);
+            }
+
+            connected.forEach(x => did.add(x));
+            if (connected.length === 1) continue;
+
+            let avg = connected.reduce((a, b) => a + b.dx, 0) / connected.length;
+            for (let n of connected) {
+                n.dx = avg;
+            }
+
+            for (let n of connected.slice(0, -1)) {
+                for (let m of connected) {
+                    let sign = connected.indexOf(m) <= connected.indexOf(n) ? 1 : -1;
+                    m.dx += sign * Math.min(n.neighbor.x - (n.x + nodeHeight(n)), 0);
+                }
+            }
+        }
+    };
+
+    const iterateNewNew = () => {
+        let h = 0.8;
+
+        console.time()
+        for (let i = 0; i < 1000; i++) {
+            let x = nodes.map(n => n.x);
+            computeDxNew();
+            nodes.forEach(n => n.x += h**2 * n.dx / 2);
+
+            let highestDx = Math.max(...nodes.map((n, i) => Math.abs(x[i] - n.x)));
+            if (highestDx < 0.001) break;
+        }
+        console.timeEnd()
+    };
+
+    const iterateNew = () => {
+        console.time()
+        while (true) {
+            let h = 1;
+            let x = nodes.map(n => n.x);
+
+            computeDxNew();
+            let k1 = nodes.map(n => n.dx);
+
+            nodes.forEach((n, i) => n.x = x[i] + h**2 *k1[i]/2/2);
+            computeDxNew();
+            let k2 = nodes.map(n => n.dx);
+
+            nodes.forEach((n, i) => n.x = x[i] + h**2 *k2[i]/2/2);
+            computeDxNew();
+            let k3 = nodes.map(n => n.dx);
+            
+            nodes.forEach((n, i) => n.x = x[i] + h**2 *k3[i]/2);
+            computeDxNew();
+            let k4 = nodes.map(n => n.dx);
+
+            let k = nodes.map((_, i) => (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]) / 6);
+            nodes.forEach((n, i) => n.x = x[i] + h**2 * k[i] / 2);
+
+            let highestDx = Math.max(...nodes.map((n, i) => Math.abs(x[i] - n.x)));
+            if (true || highestDx < 0.001) break;
+        }
+        console.timeEnd()
+    }
 
 
     const iterate = (collision = true, fromLayer?: number, iters = 100) => {
@@ -246,6 +369,7 @@
         */
     };
 
+    /*
     let highestLayer = -lowestLayer;
     for (let i = 0; i < 100; i++) iterate(false);
 
@@ -254,6 +378,9 @@
         let deezNodes = ayo.filter(x => x.layer === i);
         deezNodes.forEach((x, i) => x.x = i * 1.25);
     }
+    */
+
+
 
 
     //for (let node of nodes) node.x *= 10;
@@ -310,7 +437,7 @@
     };
 
     const render = () => {
-        if (doIterate) iterate(undefined, undefined, 5);
+        //if (doIterate) iterate(undefined, undefined, 5);
 
         ctx.resetTransform();
 
@@ -616,7 +743,7 @@
     on:keyup={(e) => e.code === 'Space' && (spacePressed = false)}
     on:mousedown={() => mouseHeld = true}
     on:mouseup={() => mouseHeld = false}
-    on:keydown={e => e.code === 'KeyI' && (doIterate = true)}
+    on:keydown={e => e.code === 'KeyI' && iterateNewNew()}
     on:keyup={e => e.code === 'KeyI' && (doIterate = false)}
 />
 
