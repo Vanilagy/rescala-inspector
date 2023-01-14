@@ -33,7 +33,7 @@
         value: string,
         layer?: number,
         x?: number,
-        dx?: number,
+        a?: number,
         in?: Node[],
         out?: Node[],
         neighbor?: Node,
@@ -138,13 +138,13 @@
         node.neighbor = sortedNodes.find((x, i) => x.layer === node.layer && i > sortedNodes.indexOf(node));
     }
 
-    const computeDx = () => {
+    const computeForces = () => {
         let did = new Set<Node>();
 
-        for (let node of nodes) node.dx = 0;
+        for (let node of nodes) node.a = 0;
         for (let edge of edges) {
-            edge.to.dx += (edge.from.x - edge.to.x) / 2;
-            edge.from.dx -= (edge.from.x - edge.to.x) / 2;
+            edge.to.a += (edge.from.x - edge.to.x) / 2;
+            edge.from.a -= (edge.from.x - edge.to.x) / 2;
         }
 
         for (let node of nodes) {
@@ -163,15 +163,15 @@
             connected.forEach(x => did.add(x));
             if (connected.length === 1) continue;
 
-            let avg = connected.reduce((a, b) => a + b.dx, 0) / connected.length;
+            let avg = connected.reduce((a, b) => a + b.a, 0) / connected.length;
             for (let n of connected) {
-                n.dx = avg;
+                n.a = avg;
             }
 
             for (let n of connected.slice(0, -1)) {
                 for (let m of connected) {
                     let sign = connected.indexOf(m) <= connected.indexOf(n) ? 1 : -1;
-                    m.dx += sign * Math.min(n.neighbor.x - (n.x + nodeHeight(n)), 0);
+                    m.a += sign * Math.min(n.neighbor.x - (n.x + nodeHeight(n)), 0);
                 }
             }
         }
@@ -183,8 +183,8 @@
         console.time()
         for (let i = 0; i < 1000; i++) {
             let x = nodes.map(n => n.x);
-            computeDx();
-            nodes.forEach(n => n.x += h**2 * n.dx / 2);
+            computeForces();
+            nodes.forEach(n => n.x += h**2 * n.a / 2);
 
             let highestDx = Math.max(...nodes.map((n, i) => Math.abs(x[i] - n.x)));
             if (highestDx < 0.001) break;
@@ -223,7 +223,7 @@
             if (node.value === 'dummy') continue;
 
             let pos = getNodePosition(node);
-            drawNode(pos.x, pos.y, node.value ?? node.label, `${node.x.toFixed(2)} ${node.dx?.toFixed(2)}` ?? node.value);
+            drawNode(pos.x, pos.y, node.value ?? node.label, `${node.x.toFixed(2)} ${node.a?.toFixed(2)}` ?? node.value);
         }
 
         requestAnimationFrame(render);
