@@ -111,28 +111,26 @@
         edges = data.edges.map(x => ({ from: nodes[x.from], to: nodes[x.to] }));
     }
 
-    for (let node of nodes) node.layer = 0;
-    let q: Node[] = nodes.filter(x => !edges.some(y => y.to === x));
-    while (q.length > 0) {
-        let rn = q.shift();
-        let children = edges.filter(x => x.from === rn).map(x => x.to);
-        for (let child of children) {
-            child.layer = rn.layer-1;
-        }
-        q.push(...children);
-    }
-    let lowestLayer = Math.min(...nodes.map(x => x.layer));
-    nodes.forEach(x => x.layer -= lowestLayer);
+    let longestOutgoingPathCache = new Map<Node, number>();
+    const longestOutgoingPath = (node: Node) => {
+        if (longestOutgoingPathCache.has(node)) return longestOutgoingPathCache.get(node);
 
-    q = nodes.filter(x => !edges.some(y => y.from === x));
-    for (let node of nodes) node.layer = 0;
-    while (q.length > 0) {
-        let rn = q.shift();
-        let parents = edges.filter(x => x.to === rn).map(x => x.from);
-        for (let parent of parents) {
-            parent.layer = rn.layer+1;
-        }
-        q.push(...parents);
+        let relevantEdges = edges.filter(x => x.from === node);
+        let res: number;
+        if (relevantEdges.length === 0) res = 0;
+        else res = Math.max(...relevantEdges.map(x => longestOutgoingPath(x.to))) + 1;
+
+        longestOutgoingPathCache.set(node, res);
+        return res;
+    };
+    for (let node of nodes) node.layer = longestOutgoingPath(node);
+
+    // Ensure that each node is just one layer after its closest parent
+    for (let node of [...nodes].sort((a, b) => b.layer - a.layer)) {
+        let incoming = edges.filter(x => x.to === node);
+        if (incoming.length === 0) continue;
+
+        node.layer = Math.min(...incoming.map(x => x.from.layer)) - 1;
     }
 
     let rawNodes = [...nodes];
