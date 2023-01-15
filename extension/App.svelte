@@ -171,19 +171,7 @@
     let highestLayer = Math.max(...nodes.map(x => x.layer));
     for (let layer = 0; layer <= highestLayer; layer++) {
         let deezNodes = nodes.filter(x => x.layer === layer);
-        if (true || layer === 0) {
-            deezNodes.forEach((x, i) => x.x = i);
-        } else {
-            deezNodes.forEach(x => x.x /= x.out.length);
-            deezNodes.sort((a, b) => a.x - b.x);
-            deezNodes.forEach((x, i) => x.x = i);
-        }
-
-        for (let edge of edges) {
-            if (edge.to.layer !== layer) continue;
-            if (!isFinite(edge.from.x)) edge.from.x = 0;
-            edge.from.x += edge.to.x;
-        }
+        deezNodes.forEach((x, i) => x.x = i);
     }
 
     const nodeHeight = (n: Node) => {
@@ -396,6 +384,10 @@
         };
     }
 
+    const quadraticBezierDerivative = (p0: number, p1: number, p2: number, t: number) => {
+        return 2*(1-t)*(p1-p0) + 2*t*(p2-p1);
+    };
+
     const drawEdge = (edge: Edge, n = 0) => {
         if (edge.from.dummy) return;
 
@@ -407,15 +399,27 @@
             
             let c1 = getNodePosition(edge.from, true);
             let c2 = getNodePosition(edge.to, true);
-            let angle = Math.atan2(c2.y-c1.y, c2.x-c1.x) * 0.8; // Dampen the angle a bit
+            let angle = Math.atan2(c2.y-c1.y, c2.x-c1.x);
+            const dampeningThreshold = Math.PI/6;
+            if (Math.abs(angle) >= dampeningThreshold) {
+                // Dampen the angle a bit
+                angle = Math.sign(angle) * (dampeningThreshold + 0.5*(Math.abs(angle) - dampeningThreshold))
+            }
 
             let { x: x1, y: y1 } = getPosAroundNode(p1.x, p1.y, angle);
             let { x: x2, y: y2 } = getPosAroundNode(p2.x, p2.y, Math.PI + angle);
 
+            let cpx = (x1+x2)/2;
+            let cpy = 0.2*y1 + 0.8*y2;
             ctx.moveTo(x1, y1);
-            ctx.quadraticCurveTo((x1+x2)/2, y2, x2, y2);
+            ctx.quadraticCurveTo(cpx, cpy, x2, y2);
 
-            drawArrow(n, x2, y2, 0);
+            let endAngle = Math.atan2(
+                quadraticBezierDerivative(y1, cpy, y2, 1),
+                quadraticBezierDerivative(x1, cpx, x2, 1)
+            );
+
+            drawArrow(n, x2, y2, endAngle);
         } else {
             let path = [edge.from, edge.to];
             while (path.at(-1).dummy) path.push(path.at(-1).out[0]);
