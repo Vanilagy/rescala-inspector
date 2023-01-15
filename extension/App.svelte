@@ -329,8 +329,8 @@
 
     const drawNode = (node: Node, n: number) => {
         let { x, y } = getNodePosition(node);
-        let value = node.value ?? node.label; // temp
-        let label = `${node.x.toFixed(2)} ${node.a?.toFixed(2)}` ?? node.value;
+        let label = node.value ?? node.label; // temp
+        let value = `${node.x.toFixed(2)} ${node.a?.toFixed(2)}` ?? node.value;
 
         if (!node.dummy) {
             roundedRect(x, y, NODE_WIDTH, NODE_HEIGHT, 6);
