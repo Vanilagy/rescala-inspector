@@ -213,8 +213,11 @@
         deezNodes.forEach((x, i) => x.x = i);
     }
 
-    const nodeHeight = (n: Node) => {
-        if (n.neighbor && n.neighbor.component !== n.component) return 2;
+    const nodeHeight = (n: Node, forCollision = false) => {
+        // If the node height is needed for an operation concerning collisions, expand to a larger size if the node
+        // is the last node in its connected component
+        if (forCollision && n.neighbor && n.neighbor.component !== n.component) return 2;
+        
         return n.dummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
     };
 
@@ -246,7 +249,7 @@
             let connected = [node];
             while (
                 connected.at(-1).neighbor &&
-                connected.at(-1).neighbor.x - (connected.at(-1).x + nodeHeight(connected.at(-1)) + 1e-6) <= 0
+                connected.at(-1).neighbor.x - (connected.at(-1).x + nodeHeight(connected.at(-1), true) + 1e-6) <= 0
             ) {
                 connected.push(connected.at(-1).neighbor);
             }
@@ -279,7 +282,7 @@
             }
 
             for (let n of connected.slice(0, -1)) {
-                let force = 0.25 * Math.min(n.neighbor.x - (n.x + nodeHeight(n)), 0);
+                let force = 0.25 * Math.min(n.neighbor.x - (n.x + nodeHeight(n, true)), 0);
 
                 for (let m of connected) {
                     let sign = connected.indexOf(m) <= connected.indexOf(n) ? 1 : -1;
@@ -364,7 +367,7 @@
         if (showNodeBoundingBoxes) {
             ctx.globalAlpha = 0.2;
             ctx.fillStyle = `hsl(${100 + 50 * n}, 60%, 60%)`;
-            roundedRect(x, y, NODE_WIDTH, 100 * nodeHeight(node), 6);
+            roundedRect(x, y, NODE_WIDTH, 100 * nodeHeight(node, true), 6);
             ctx.fill();
             ctx.globalAlpha = 1;
         }
@@ -382,21 +385,22 @@
 		ctx.closePath();
     };
 
-    const getPosAroundNode = (nodeX: number, nodeY: number, angle: number) => {
-        let centerX = nodeX + NODE_WIDTH/2;
-        let centerY = nodeY + NODE_HEIGHT/2;
+    const getPosAroundNode = (node: Node, angle: number) => {
+        let { x: centerX, y: centerY } = getNodePosition(node, true);
 
         let margin = 7;
+        let extendedWidth = NODE_WIDTH/2 + margin;
+        let extendedHeight = NODE_HEIGHT/2 * nodeHeight(node) + margin;
 
-        let x = Math.cos(angle) * (NODE_WIDTH/2 + margin);
-        let y = Math.sin(angle) * (NODE_HEIGHT/2 + margin);
+        let x = Math.cos(angle) * extendedWidth;
+        let y = Math.sin(angle) * extendedHeight;
 
         if (Math.abs(Math.tan(angle)) < 1) { // Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
-            let uh = (NODE_WIDTH/2 + margin) / Math.abs(x);
+            let uh = extendedWidth / Math.abs(x);
             x *= uh;
             y *= uh;
         } else {
-            let uh = (NODE_HEIGHT/2 + margin) / Math.abs(y);
+            let uh = extendedHeight / Math.abs(y);
             x *= uh;
             y *= uh;
         }
@@ -415,9 +419,6 @@
         if (edge.from.dummy) return;
 
         if (!edge.to.dummy) {
-            let p1 = getNodePosition(edge.from);
-            let p2 = getNodePosition(edge.to);
-
             ctx.beginPath();
             
             let c1 = getNodePosition(edge.from, true);
@@ -429,8 +430,8 @@
                 angle = Math.sign(angle) * (dampeningThreshold + 0.5*(Math.abs(angle) - dampeningThreshold))
             }
 
-            let { x: x1, y: y1 } = getPosAroundNode(p1.x, p1.y, angle);
-            let { x: x2, y: y2 } = getPosAroundNode(p2.x, p2.y, Math.PI + angle);
+            let { x: x1, y: y1 } = getPosAroundNode(edge.from, angle);
+            let { x: x2, y: y2 } = getPosAroundNode(edge.to, Math.PI + angle);
 
             let cpx = (x1+x2)/2;
             let cpy = 0.2*y1 + 0.8*y2;
@@ -466,8 +467,8 @@
                 let p2 = getNodePosition(to, true);
                 let angle = Math.atan2(p2.y-p1.y, p2.x-p1.x);
 
-                if (!from.dummy) p1 = getPosAroundNode(getNodePosition(from).x, getNodePosition(from).y, angle);
-                if (!to.dummy) p2 = getPosAroundNode(getNodePosition(to).x, getNodePosition(to).y, Math.PI + angle);
+                if (!from.dummy) p1 = getPosAroundNode(from, angle);
+                if (!to.dummy) p2 = getPosAroundNode(to, Math.PI + angle);
 
                 if (i === 0) points.push(p1);
                 points.push(p2);
