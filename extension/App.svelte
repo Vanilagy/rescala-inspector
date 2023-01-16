@@ -39,7 +39,8 @@
         in?: Node[],
         out?: Node[],
         neighbor?: Node,
-        dummy?: boolean
+        dummy?: boolean,
+        component?: number
     }
     type Edge = {
         from: Node,
@@ -101,8 +102,6 @@
         { from: n10, to: n9 },
     ];
     */
-    
-    
 
     if (localStorage.getItem('storedGraph')) {
         console.log("Loaded stored graph");
@@ -125,12 +124,43 @@
     };
     for (let node of nodes) node.layer = longestOutgoingPath(node);
 
-    // Ensure that each node is just one layer after its closest parent
-    for (let node of [...nodes].sort((a, b) => b.layer - a.layer)) {
-        let incoming = edges.filter(x => x.to === node);
-        if (incoming.length === 0) continue;
+    // See if long edges can be shortened
+    let done = new Set<Edge>();
+    while (true) {
+        let nextEdge = edges.filter(x => x.from.layer - x.to.layer >= 2).sort((a, b) => b.to.layer - a.to.layer).find(x => !done.has(x))
+        if (!nextEdge) break;
 
-        node.layer = Math.min(...incoming.map(x => x.from.layer)) - 1;
+        let node = nextEdge.to;
+        let parents = edges.filter(x => x.to === node).map(x => x.from);
+
+        const computeConnectedEdgeLength = () => {
+            return edges
+                .filter(x => x.from === node || parents.includes(x.from) || parents.includes(x.to))
+                .reduce((a, b) => {
+                    // If the two layers match (difference = 0), return Infinity, because we never want that to happen
+                    return a + ((b.from.layer - b.to.layer) || Infinity);
+                }, 0);
+        };
+
+        let maxLayer = Math.max(...parents.map(x => x.layer));
+
+        while (true) {
+            let len = computeConnectedEdgeLength();
+            node.layer++;
+            let before = parents.map(x => x.layer);
+            parents.forEach(x => x.layer = Math.max(x.layer, node.layer + 1));
+
+            let newMaxLayer = Math.max(...parents.map(x => x.layer));
+
+            if (computeConnectedEdgeLength() > len || newMaxLayer > maxLayer) {
+                parents.forEach((x, i) => x.layer = before[i]);
+                node.layer--;
+
+                break;
+            }
+        }
+
+        done.add(nextEdge);
     }
 
     let rawNodes = [...nodes];
@@ -166,6 +196,15 @@
         edge.to.in.push(edge.from);
     }
 
+    // Assign each node its connected component
+    const computeComponent = (node: Node, i: number) => {
+        if (node.component !== undefined) return;
+        node.component = i;
+        for (let child of node.out) computeComponent(child, i);
+        for (let parent of node.in) computeComponent(parent, i);
+    };
+    for (let [i, node] of nodes.filter(x => x.in.length === 0).entries()) computeComponent(node, i);
+
     for (let node of nodes) node.x = Infinity;
     
     let highestLayer = Math.max(...nodes.map(x => x.layer));
@@ -175,6 +214,7 @@
     }
 
     const nodeHeight = (n: Node) => {
+        if (n.neighbor && n.neighbor.component !== n.component) return 2;
         return n.dummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
     };
 
@@ -238,15 +278,6 @@
                 }
             }
 
-            
-            /*
-            let avg = connected.reduce((a, b) => a + b.a, 0) / connected.length;
-            for (let n of connected) {
-                n.a = avg;
-            }
-            */
-            
-
             for (let n of connected.slice(0, -1)) {
                 let force = 0.25 * Math.min(n.neighbor.x - (n.x + nodeHeight(n)), 0);
 
@@ -261,22 +292,14 @@
     const iterate = (noCollision = false) => {
         let h = 0.25;
 
-        console.time()
-        
         for (let i = 0; i < 1; i++) {
             let x = nodes.map(n => n.x);
             computeForces(noCollision);
-
-            
-            //debugger;
             nodes.forEach(n => n.x += h * n.a);
-
 
             let highestDx = Math.max(...nodes.map((n, i) => Math.abs(x[i] - n.x)));
             //if (highestDx < 0.001 || noCollision) break;
         }
-        
-        console.timeEnd()
     };
 
     const getNodePosition = (node: Node, center = false) => {
@@ -516,7 +539,7 @@
     const spreadOut = () => {
         let highestLayer = Math.max(...nodes.map(x => x.layer));
         for (let layer = 0; layer <= highestLayer; layer++) {
-            let deezNodes = nodes.filter(x => x.layer === layer).sort((a, b) => a.x-b.x);
+            let deezNodes = nodes.filter(x => x.layer === layer).sort((a, b) => a.x-b.x).sort((a, b) => a.component - b.component);
             deezNodes.forEach((x, i) => x.x = i);
         }
     };
