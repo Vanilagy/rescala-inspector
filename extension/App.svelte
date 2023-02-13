@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
-    const NODE_WIDTH = 100;
+    const NODE_WIDTH = 150;
     const NODE_HEIGHT = 70;
     const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
@@ -12,11 +12,103 @@
     let innerHeight = window.innerHeight;
     let spacePressed = false;
     let mouseHeld = false;
-    let scale = 0.5;
-    let originX = 200 / scale;
-    let originY = 100 / scale;
+    let scale = 1;
+    let originX = 200;
+    let originY = 100;
     let doIterate = false;
     let showNodeBoundingBoxes = false;
+
+    const reScalaEvents = [
+
+    {"type":"Create","resource":"todo.TodoAppUI#inputFieldHandler handler:127"},
+{"type":"Create","resource":"todo.TodoAppUI#inputFieldHandler handlerEvent:137","inputs":["todo.TodoAppUI#inputFieldHandler handler:127"]},
+{"type":"Discover","source":"todo.TodoAppUI#inputFieldHandler handler:127","sink":"todo.TodoAppUI#inputFieldHandler handlerEvent:137"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents removeAll:57"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents toggleAll:61"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents deltaEvt:66"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents tasksRDT:77","inputs":["todo.TodoAppUI#inputFieldHandler handlerEvent:137","todo.TodoAppUI#getContents removeAll:57","todo.TodoAppUI#getContents deltaEvt:66"]},
+{"type":"Discover","source":"todo.TodoAppUI#inputFieldHandler handlerEvent:137","sink":"todo.TodoAppUI#getContents tasksRDT:77"},
+{"type":"Discover","source":"todo.TodoAppUI#getContents removeAll:57","sink":"todo.TodoAppUI#getContents tasksRDT:77"},
+{"type":"Discover","source":"todo.TodoAppUI#getContents deltaEvt:66","sink":"todo.TodoAppUI#getContents tasksRDT:77"},
+{"type":"Create","resource":"todo.Storing.storedAs:34","inputs":["todo.TodoAppUI#getContents tasksRDT:77"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksRDT:77","sink":"todo.Storing.storedAs:34"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents tasksList:82","inputs":["todo.TodoAppUI#getContents tasksRDT:77"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksRDT:77","sink":"todo.TodoAppUI#getContents tasksList:82"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents tasksData:84","inputs":["todo.TodoAppUI#getContents tasksList:82"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksList:82","sink":"todo.TodoAppUI#getContents tasksData:84"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef edittext:98"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef edittextStr:103","inputs":["todo.TaskReferences#createTaskRef edittext:98"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef edittext:98","sink":"todo.TaskReferences#createTaskRef edittextStr:103"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef editDiv:107"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef changeEditing:109","inputs":["todo.TaskReferences#createTaskRef edittextStr:103"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef edittextStr:103","sink":"todo.TaskReferences#createTaskRef changeEditing:109"},
+{"type":"Create","resource":"»todo.TaskReferences#createTaskRef changeEditing:109«'1","inputs":["todo.TaskReferences#createTaskRef editDiv:107"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef editDiv:107","sink":"»todo.TaskReferences#createTaskRef changeEditing:109«'1"},
+{"type":"Create","resource":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))","inputs":["todo.TaskReferences#createTaskRef changeEditing:109","»todo.TaskReferences#createTaskRef changeEditing:109«'1"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef changeEditing:109","sink":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))"},
+{"type":"Discover","source":"»todo.TaskReferences#createTaskRef changeEditing:109«'1","sink":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef editingV:110","inputs":["(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))"]},
+{"type":"Discover","source":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))","sink":"todo.TaskReferences#createTaskRef editingV:110"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef doneClick:112"},
+{"type":"Create","resource":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))","inputs":["todo.TodoAppUI#getContents toggleAll:61","todo.TaskReferences#createTaskRef doneClick:112"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents toggleAll:61","sink":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))"},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef doneClick:112","sink":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef deltaEvt:116"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef crdt:138","inputs":["(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))","todo.TaskReferences#createTaskRef edittextStr:103","todo.TaskReferences#createTaskRef deltaEvt:116"]},
+{"type":"Discover","source":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))","sink":"todo.TaskReferences#createTaskRef crdt:138"},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef edittextStr:103","sink":"todo.TaskReferences#createTaskRef crdt:138"},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef deltaEvt:116","sink":"todo.TaskReferences#createTaskRef crdt:138"},
+{"type":"Create","resource":"»todo.Storing.storedAs:34«'1","inputs":["todo.TaskReferences#createTaskRef crdt:138"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef crdt:138","sink":"»todo.Storing.storedAs:34«'1"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef taskData:144","inputs":["todo.TaskReferences#createTaskRef crdt:138"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef crdt:138","sink":"todo.TaskReferences#createTaskRef taskData:144"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef removeButton:147"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef editInput:149","inputs":["todo.TaskReferences#createTaskRef taskData:144"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef taskData:144","sink":"todo.TaskReferences#createTaskRef editInput:149"},
+{"type":"Create","resource":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159","inputs":["todo.TaskReferences#createTaskRef editInput:149"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef editInput:149","sink":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef:152","inputs":["todo.TaskReferences#createTaskRef editDiv:107"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef editDiv:107","sink":"todo.TaskReferences#createTaskRef:152"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef listItem:155","inputs":["todo.TaskReferences#createTaskRef editingV:110"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef editingV:110","sink":"todo.TaskReferences#createTaskRef listItem:155"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef listItem:161","inputs":["todo.TaskReferences#createTaskRef taskData:144"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef taskData:144","sink":"todo.TaskReferences#createTaskRef listItem:161"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef listItem:163","inputs":["todo.TaskReferences#createTaskRef taskData:144"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef taskData:144","sink":"todo.TaskReferences#createTaskRef listItem:163"},
+{"type":"Create","resource":"todo.TaskReferences#createTaskRef:169","inputs":["todo.TaskReferences#createTaskRef removeButton:147"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef removeButton:147","sink":"todo.TaskReferences#createTaskRef:169"},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef crdt:138","sink":"todo.TodoAppUI#getContents tasksData:84"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents taskTags:85","inputs":["todo.TodoAppUI#getContents tasksList:82"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksList:82","sink":"todo.TodoAppUI#getContents taskTags:85"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents:98","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:98"},
+{"type":"Create","resource":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57","inputs":["todo.TodoAppUI#getContents taskTags:85"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents taskTags:85","sink":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents:108","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:108"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents:118","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:118"},
+{"type":"Create","resource":"todo.TodoAppUI#getContents:121","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:121"},
+{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'1","inputs":["todo.TodoAppUI#getContents:98"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents:98","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'1"},
+{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'2","inputs":["todo.TaskReferences#createTaskRef listItem:155"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef listItem:155","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'2"},
+{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'3","inputs":["todo.TaskReferences#createTaskRef listItem:161"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef listItem:161","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'3"},
+{"type":"Create","resource":"rescala.extra.Tags#REFragModifier#applyTo:85","inputs":["todo.TaskReferences#createTaskRef listItem:163"]},
+{"type":"Discover","source":"todo.TaskReferences#createTaskRef listItem:163","sink":"rescala.extra.Tags#REFragModifier#applyTo:85"},
+{"type":"Create","resource":"rescala.extra.Tags#RETagListModifier#applyTo:142","inputs":["rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57"]},
+{"type":"Discover","source":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57","sink":"rescala.extra.Tags#RETagListModifier#applyTo:142"},
+{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'4","inputs":["todo.TodoAppUI#getContents:108"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents:108","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'4"},
+{"type":"Create","resource":"»rescala.extra.Tags#REFragModifier#applyTo:85«'1","inputs":["todo.TodoAppUI#getContents:118"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents:118","sink":"»rescala.extra.Tags#REFragModifier#applyTo:85«'1"},
+{"type":"Create","resource":"»rescala.extra.Tags#REFragModifier#applyTo:85«'2","inputs":["todo.TodoAppUI#getContents:121"]},
+{"type":"Discover","source":"todo.TodoAppUI#getContents:121","sink":"»rescala.extra.Tags#REFragModifier#applyTo:85«'2"},
+
+
+    ];
     
     onMount(() => {
         ctx = canvas.getContext('2d', { desynchronized: true });
@@ -26,11 +118,22 @@
     const onMouseMove = (e: MouseEvent) => {
         if (!spacePressed || !mouseHeld) return;
 
-        originX += e.movementX / scale; 
-        originY += e.movementY / scale;
+        originX += e.movementX; 
+        originY += e.movementY;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+        e.preventDefault();
+
+        let scaleChange = Math.pow(1.002, -e.deltaY);
+
+        originX = (originX - e.clientX) * scaleChange + e.clientX;
+        originY = (originY - e.clientY) * scaleChange + e.clientY;
+        scale *= scaleChange;
     };
 
     interface Node {
+        id?: string,
         label: string,
         value: string,
         layer?: number,
@@ -57,9 +160,34 @@
     let n8: Node = { label: 'username', value: '"8"' };
     let n9: Node = { label: 'username', value: '"9"' };
     let n10: Node = { label: 'username', value: '"10"' };
-    let nodes = [n1, n2, n3, n4, n5, n6, n7, n8, n9, n10];
+    let nodes: Node[] = [];
     let edges: Edge[] = [];
 
+    for (let event of reScalaEvents) {
+        if (event.type === 'Create') {
+            let newNode: Node = {
+                id: event.resource,
+                label: event.resource.split('#').at(-1).split(':')[0].split(' ').at(-1).split('.').at(-1),
+                value: '0'
+            };
+            nodes.push(newNode);
+
+            if (!event.inputs) continue;
+
+            for (let input of event.inputs) {
+                let node = nodes.find(x => x.id === input);
+                if (node) edges.push({ from: node, to: newNode });
+            }
+        } else if (event.type === 'Discover') {
+            let n1 = nodes.find(x => x.id === event.source);
+            let n2 = nodes.find(x => x.id === event.sink);
+            if (n1 && n2 && !edges.some(x => x.from === n1 && x.to === n2)) {
+                edges.push({ from: n1, to: n2 });
+            }
+        }
+    }
+
+    /*
     function shuffle<T>(a: T[]) {
         for (let i = a.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -77,30 +205,6 @@
 
     // Remove unconnected nodes
     nodes = nodes.filter(x => edges.some(y => y.from === x || y.to === x));
-
-    /*
-    nodes = [n1, n2, n3];
-    edges = [];
-    
-    n1.a = -1;
-    n2.a = 0;
-    n3.a = -5;
-    */
-
-    
-    
-    /*
-    nodes = [n1,n2,n3,n4,n5,n6,n7,n8,n9,n10];
-    edges = [
-        { from: n1, to: n2 },
-        { from: n2, to: n3 },
-        { from: n3, to: n4 },
-        { from: n3, to: n5 },
-        { from: n6, to: n5 },
-        { from: n7, to: n8 },
-        { from: n8, to: n9 },
-        { from: n10, to: n9 },
-    ];
     */
 
     if (localStorage.getItem('storedGraph')) {
@@ -213,11 +317,7 @@
         deezNodes.forEach((x, i) => x.x = i);
     }
 
-    const nodeHeight = (n: Node, forCollision = false) => {
-        // If the node height is needed for an operation concerning collisions, expand to a larger size if the node
-        // is the last node in its connected component
-        if (forCollision && n.neighbor && n.neighbor.component !== n.component) return 2;
-        
+    const nodeHeight = (n: Node) => {
         return n.dummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
     };
 
@@ -242,14 +342,28 @@
             edge.from.a -= force / 2;
         }
 
-        if (!noCollision) for (let node of nodes) {
-            if (!node.neighbor) continue;
+        if (noCollision) return;
+
+        for (let node of nodes) {
+            if (!node.neighbor) continue
+
+            // Spring force between nodes of the same layer
+            let dist = node.neighbor.x - (node.x + nodeHeight(node));
+            let wanted = 1;
+            let delta = Math.max(wanted - dist, 0);
+
+            let force = 0.8 * delta;
+            node.a -= force;
+            node.neighbor.a += force;
+        }
+
+        for (let node of nodes) {
             if (did.has(node)) continue;
 
             let connected = [node];
             while (
                 connected.at(-1).neighbor &&
-                connected.at(-1).neighbor.x - (connected.at(-1).x + nodeHeight(connected.at(-1), true) + 1e-6) <= 0
+                connected.at(-1).neighbor.x - (connected.at(-1).x + nodeHeight(connected.at(-1)) + 1e-6) <= 0
             ) {
                 connected.push(connected.at(-1).neighbor);
             }
@@ -282,7 +396,7 @@
             }
 
             for (let n of connected.slice(0, -1)) {
-                let force = 0.25 * Math.min(n.neighbor.x - (n.x + nodeHeight(n, true)), 0);
+                let force = 0.25 * Math.min(n.neighbor.x - (n.x + nodeHeight(n)), 0);
 
                 for (let m of connected) {
                     let sign = connected.indexOf(m) <= connected.indexOf(n) ? 1 : -1;
@@ -306,7 +420,7 @@
     };
 
     const getNodePosition = (node: Node, center = false) => {
-        let x = 300 * (highestLayer - node.layer);
+        let x = 350 * (highestLayer - node.layer);
         let y = 100 * node.x;
 
         if (center) {
@@ -325,8 +439,8 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        ctx.scale(scale, scale);
         ctx.translate(originX, originY);
+        ctx.scale(scale, scale);
 
         for (let edge of edges) {
             drawEdge(edge, edges.indexOf(edge));
@@ -341,8 +455,8 @@
 
     const drawNode = (node: Node, n: number) => {
         let { x, y } = getNodePosition(node);
-        let label = node.value ?? node.label; // temp
-        let value = `${node.x.toFixed(2)} ${node.a?.toFixed(2)}` ?? node.value;
+        let label = node.label;
+        let value = node.value;
 
         if (!node.dummy) {
             roundedRect(x, y, NODE_WIDTH, NODE_HEIGHT, 6);
@@ -356,18 +470,20 @@
 
             ctx.textAlign = 'center';
             ctx.font = '14px Inter';
-            ctx.textBaseline = 'top';
+            ctx.textBaseline = 'middle';
             ctx.fillStyle = 'white';
-            ctx.fillText(label, x+50, y+20);
+            ctx.fillText(label, x+NODE_WIDTH/2, y+NODE_HEIGHT/2);
 
+            /*
             ctx.font = '10px Inter';
             ctx.fillText(value, x+50, y+40);
+            */
         }
 
         if (showNodeBoundingBoxes) {
             ctx.globalAlpha = 0.2;
             ctx.fillStyle = `hsl(${100 + 50 * n}, 60%, 60%)`;
-            roundedRect(x, y, NODE_WIDTH, 100 * nodeHeight(node, true), 6);
+            roundedRect(x, y, NODE_WIDTH, 100 * nodeHeight(node), 6);
             ctx.fill();
             ctx.globalAlpha = 1;
         }
@@ -620,5 +736,6 @@
     width={innerWidth * window.devicePixelRatio}
     height={innerHeight * window.devicePixelRatio}
     on:mousemove={onMouseMove}
+    on:wheel={onWheel}
 />
 <button class="absolute top-0 left-0 bg-[#292a2d] px-2 py-1 rounded-md shadow m-3 text-sm">Do the Harlem Shake</button>
