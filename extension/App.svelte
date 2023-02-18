@@ -18,97 +18,55 @@
     let doIterate = false;
     let showNodeBoundingBoxes = false;
 
-    const reScalaEvents = [
+    const reScalaEvents =[
+        {"type":"Create","resource":{"idCounter":1,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handler","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":109}},
+{"type":"Create","resource":{"idCounter":2,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handlerEvent","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":119},"inputs":[{"idCounter":1,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handler","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":109}]},
+{"type":"Discover","source":{"idCounter":1,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handler","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":109},"sink":{"idCounter":2,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handlerEvent","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":119}},
+{"type":"Create","resource":{"idCounter":3,"description":"","enclosing":"todo.TodoAppUI#getContents removeAll","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":39}},
+{"type":"Create","resource":{"idCounter":4,"description":"","enclosing":"todo.TodoAppUI#getContents toggleAll","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":43}},
+{"type":"Create","resource":{"idCounter":5,"description":"","enclosing":"todo.TodoAppUI#getContents deltaEvt","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":48}},
+{"type":"Create","resource":{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59},"inputs":[{"idCounter":2,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handlerEvent","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":119},{"idCounter":3,"description":"","enclosing":"todo.TodoAppUI#getContents removeAll","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":39},{"idCounter":5,"description":"","enclosing":"todo.TodoAppUI#getContents deltaEvt","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":48}]},
+{"type":"Discover","source":{"idCounter":2,"description":"","enclosing":"todo.TodoAppUI#inputFieldHandler handlerEvent","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":119},"sink":{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59}},
+{"type":"Discover","source":{"idCounter":3,"description":"","enclosing":"todo.TodoAppUI#getContents removeAll","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":39},"sink":{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59}},
+{"type":"Discover","source":{"idCounter":5,"description":"","enclosing":"todo.TodoAppUI#getContents deltaEvt","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":48},"sink":{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59}},
+{"type":"Create","resource":{"idCounter":7,"description":"","enclosing":"todo.Storing.storedAs","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/Storing.scala","line":34},"inputs":[{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59}]},
+{"type":"Discover","source":{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59},"sink":{"idCounter":7,"description":"","enclosing":"todo.Storing.storedAs","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/Storing.scala","line":34}},
+{"type":"Create","resource":{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64},"inputs":[{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59}]},
+{"type":"Discover","source":{"idCounter":6,"description":"","enclosing":"todo.TodoAppUI#getContents tasksRDT","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":59},"sink":{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64}},
+{"type":"Value","source":{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64},"value":"<some html>"},
+{"type":"Create","resource":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66},"inputs":[{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64}]},
+{"type":"Discover","source":{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64},"sink":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66}},
+{"type":"Value","source":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66},"value":"<some html>"},
+{"type":"Create","resource":{"idCounter":10,"description":"","enclosing":"todo.TodoAppUI#getContents taskTags","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":67},"inputs":[{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64}]},
+{"type":"Discover","source":{"idCounter":8,"description":"","enclosing":"todo.TodoAppUI#getContents tasksList","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":64},"sink":{"idCounter":10,"description":"","enclosing":"todo.TodoAppUI#getContents taskTags","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":67}},
+{"type":"Value","source":{"idCounter":10,"description":"","enclosing":"todo.TodoAppUI#getContents taskTags","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":67},"value":"<some html>"},
+{"type":"Create","resource":{"idCounter":11,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":80},"inputs":[{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66}]},
+{"type":"Discover","source":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66},"sink":{"idCounter":11,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":80}},
+{"type":"Value","source":{"idCounter":11,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":80},"value":"<some html>"},
+{"type":"Create","resource":{"idCounter":12,"description":"","enclosing":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":57},"inputs":[{"idCounter":10,"description":"","enclosing":"todo.TodoAppUI#getContents taskTags","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":67}]},
+{"type":"Discover","source":{"idCounter":10,"description":"","enclosing":"todo.TodoAppUI#getContents taskTags","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":67},"sink":{"idCounter":12,"description":"","enclosing":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":57}},
+{"type":"Value","source":{"idCounter":12,"description":"","enclosing":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":57},"value":"<some html>"},
+{"type":"Create","resource":{"idCounter":13,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":90},"inputs":[{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66}]},
+{"type":"Discover","source":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66},"sink":{"idCounter":13,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":90}},
+{"type":"Value","source":{"idCounter":13,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":90},"value":"<some html>"},
+{"type":"Create","resource":{"idCounter":14,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":100},"inputs":[{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66}]},
+{"type":"Discover","source":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66},"sink":{"idCounter":14,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":100}},
+{"type":"Value","source":{"idCounter":14,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":100},"value":"Value(<span class=\"todo-count\"><strong>0</strong><span> items left</span></span>)"},
+{"type":"Create","resource":{"idCounter":15,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":103},"inputs":[{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66}]},
+{"type":"Discover","source":{"idCounter":9,"description":"","enclosing":"todo.TodoAppUI#getContents tasksData","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":66},"sink":{"idCounter":15,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":103}},
+{"type":"Value","source":{"idCounter":15,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":103},"value":"Value(<button class=\"clear-completed hidden\">remove all done todos</button>)"},
+{"type":"Create","resource":{"idCounter":16,"description":"","enclosing":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":159},"inputs":[{"idCounter":11,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":80}]},
+{"type":"Discover","source":{"idCounter":11,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":80},"sink":{"idCounter":16,"description":"","enclosing":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":159}},
+{"type":"Create","resource":{"idCounter":17,"description":"","enclosing":"rescala.extra.Tags#RETagListModifier#applyTo","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":142},"inputs":[{"idCounter":12,"description":"","enclosing":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":57}]},
+{"type":"Discover","source":{"idCounter":12,"description":"","enclosing":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":57},"sink":{"idCounter":17,"description":"","enclosing":"rescala.extra.Tags#RETagListModifier#applyTo","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":142}},
+{"type":"Create","resource":{"idCounter":18,"description":"","enclosing":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":159},"inputs":[{"idCounter":13,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":90}]},
+{"type":"Discover","source":{"idCounter":13,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":90},"sink":{"idCounter":18,"description":"","enclosing":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":159}},
+{"type":"Create","resource":{"idCounter":20,"description":"","enclosing":"rescala.extra.Tags#REFragModifier#applyTo","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":85},"inputs":[{"idCounter":14,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":100}]},
+{"type":"Discover","source":{"idCounter":14,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":100},"sink":{"idCounter":20,"description":"","enclosing":"rescala.extra.Tags#REFragModifier#applyTo","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":85}},
+{"type":"Create","resource":{"idCounter":22,"description":"","enclosing":"rescala.extra.Tags#REFragModifier#applyTo","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":85},"inputs":[{"idCounter":15,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":103}]},
+{"type":"Discover","source":{"idCounter":15,"description":"","enclosing":"todo.TodoAppUI#getContents","file":"/Users/davidpayr/git/private/REScala/Modules/Example Todolist/src/main/scala/todo/TodoAppUI.scala","line":103},"sink":{"idCounter":22,"description":"","enclosing":"rescala.extra.Tags#REFragModifier#applyTo","file":"/Users/davidpayr/git/private/REScala/Modules/Reactives/js/src/main/scala/rescala/extra/Tags.scala","line":85}},
 
-    {"type":"Create","resource":"todo.TodoAppUI#inputFieldHandler handler:127"},
-{"type":"Create","resource":"todo.TodoAppUI#inputFieldHandler handlerEvent:137","inputs":["todo.TodoAppUI#inputFieldHandler handler:127"]},
-{"type":"Discover","source":"todo.TodoAppUI#inputFieldHandler handler:127","sink":"todo.TodoAppUI#inputFieldHandler handlerEvent:137"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents removeAll:57"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents toggleAll:61"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents deltaEvt:66"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents tasksRDT:77","inputs":["todo.TodoAppUI#inputFieldHandler handlerEvent:137","todo.TodoAppUI#getContents removeAll:57","todo.TodoAppUI#getContents deltaEvt:66"]},
-{"type":"Discover","source":"todo.TodoAppUI#inputFieldHandler handlerEvent:137","sink":"todo.TodoAppUI#getContents tasksRDT:77"},
-{"type":"Discover","source":"todo.TodoAppUI#getContents removeAll:57","sink":"todo.TodoAppUI#getContents tasksRDT:77"},
-{"type":"Discover","source":"todo.TodoAppUI#getContents deltaEvt:66","sink":"todo.TodoAppUI#getContents tasksRDT:77"},
-{"type":"Create","resource":"todo.Storing.storedAs:34","inputs":["todo.TodoAppUI#getContents tasksRDT:77"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksRDT:77","sink":"todo.Storing.storedAs:34"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents tasksList:82","inputs":["todo.TodoAppUI#getContents tasksRDT:77"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksRDT:77","sink":"todo.TodoAppUI#getContents tasksList:82"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents tasksData:84","inputs":["todo.TodoAppUI#getContents tasksList:82"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksList:82","sink":"todo.TodoAppUI#getContents tasksData:84"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef edittext:98"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef edittextStr:103","inputs":["todo.TaskReferences#createTaskRef edittext:98"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef edittext:98","sink":"todo.TaskReferences#createTaskRef edittextStr:103"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef editDiv:107"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef changeEditing:109","inputs":["todo.TaskReferences#createTaskRef edittextStr:103"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef edittextStr:103","sink":"todo.TaskReferences#createTaskRef changeEditing:109"},
-{"type":"Create","resource":"»todo.TaskReferences#createTaskRef changeEditing:109«'1","inputs":["todo.TaskReferences#createTaskRef editDiv:107"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef editDiv:107","sink":"»todo.TaskReferences#createTaskRef changeEditing:109«'1"},
-{"type":"Create","resource":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))","inputs":["todo.TaskReferences#createTaskRef changeEditing:109","»todo.TaskReferences#createTaskRef changeEditing:109«'1"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef changeEditing:109","sink":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))"},
-{"type":"Discover","source":"»todo.TaskReferences#createTaskRef changeEditing:109«'1","sink":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef editingV:110","inputs":["(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))"]},
-{"type":"Discover","source":"(or todo.TaskReferences#createTaskRef changeEditing:109(rescala.scheduler.Levelbased$LevelState@5) »todo.TaskReferences#createTaskRef changeEditing:109«'1(rescala.scheduler.Levelbased$LevelState@6))","sink":"todo.TaskReferences#createTaskRef editingV:110"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef doneClick:112"},
-{"type":"Create","resource":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))","inputs":["todo.TodoAppUI#getContents toggleAll:61","todo.TaskReferences#createTaskRef doneClick:112"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents toggleAll:61","sink":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))"},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef doneClick:112","sink":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef deltaEvt:116"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef crdt:138","inputs":["(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))","todo.TaskReferences#createTaskRef edittextStr:103","todo.TaskReferences#createTaskRef deltaEvt:116"]},
-{"type":"Discover","source":"(or todo.TodoAppUI#getContents toggleAll:61(rescala.scheduler.Levelbased$LevelState@7) todo.TaskReferences#createTaskRef doneClick:112(rescala.scheduler.Levelbased$LevelState@8))","sink":"todo.TaskReferences#createTaskRef crdt:138"},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef edittextStr:103","sink":"todo.TaskReferences#createTaskRef crdt:138"},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef deltaEvt:116","sink":"todo.TaskReferences#createTaskRef crdt:138"},
-{"type":"Create","resource":"»todo.Storing.storedAs:34«'1","inputs":["todo.TaskReferences#createTaskRef crdt:138"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef crdt:138","sink":"»todo.Storing.storedAs:34«'1"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef taskData:144","inputs":["todo.TaskReferences#createTaskRef crdt:138"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef crdt:138","sink":"todo.TaskReferences#createTaskRef taskData:144"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef removeButton:147"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef editInput:149","inputs":["todo.TaskReferences#createTaskRef taskData:144"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef taskData:144","sink":"todo.TaskReferences#createTaskRef editInput:149"},
-{"type":"Create","resource":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159","inputs":["todo.TaskReferences#createTaskRef editInput:149"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef editInput:149","sink":"rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef:152","inputs":["todo.TaskReferences#createTaskRef editDiv:107"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef editDiv:107","sink":"todo.TaskReferences#createTaskRef:152"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef listItem:155","inputs":["todo.TaskReferences#createTaskRef editingV:110"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef editingV:110","sink":"todo.TaskReferences#createTaskRef listItem:155"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef listItem:161","inputs":["todo.TaskReferences#createTaskRef taskData:144"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef taskData:144","sink":"todo.TaskReferences#createTaskRef listItem:161"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef listItem:163","inputs":["todo.TaskReferences#createTaskRef taskData:144"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef taskData:144","sink":"todo.TaskReferences#createTaskRef listItem:163"},
-{"type":"Create","resource":"todo.TaskReferences#createTaskRef:169","inputs":["todo.TaskReferences#createTaskRef removeButton:147"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef removeButton:147","sink":"todo.TaskReferences#createTaskRef:169"},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef crdt:138","sink":"todo.TodoAppUI#getContents tasksData:84"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents taskTags:85","inputs":["todo.TodoAppUI#getContents tasksList:82"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksList:82","sink":"todo.TodoAppUI#getContents taskTags:85"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents:98","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:98"},
-{"type":"Create","resource":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57","inputs":["todo.TodoAppUI#getContents taskTags:85"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents taskTags:85","sink":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents:108","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:108"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents:118","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:118"},
-{"type":"Create","resource":"todo.TodoAppUI#getContents:121","inputs":["todo.TodoAppUI#getContents tasksData:84"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents tasksData:84","sink":"todo.TodoAppUI#getContents:121"},
-{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'1","inputs":["todo.TodoAppUI#getContents:98"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents:98","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'1"},
-{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'2","inputs":["todo.TaskReferences#createTaskRef listItem:155"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef listItem:155","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'2"},
-{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'3","inputs":["todo.TaskReferences#createTaskRef listItem:161"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef listItem:161","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'3"},
-{"type":"Create","resource":"rescala.extra.Tags#REFragModifier#applyTo:85","inputs":["todo.TaskReferences#createTaskRef listItem:163"]},
-{"type":"Discover","source":"todo.TaskReferences#createTaskRef listItem:163","sink":"rescala.extra.Tags#REFragModifier#applyTo:85"},
-{"type":"Create","resource":"rescala.extra.Tags#RETagListModifier#applyTo:142","inputs":["rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57"]},
-{"type":"Discover","source":"rescala.extra.Tags#SignalTagListToScalatags#asModifierL:57","sink":"rescala.extra.Tags#RETagListModifier#applyTo:142"},
-{"type":"Create","resource":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'4","inputs":["todo.TodoAppUI#getContents:108"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents:108","sink":"»rescala.extra.Tags#genericReactiveAttrValue $anon#apply:159«'4"},
-{"type":"Create","resource":"»rescala.extra.Tags#REFragModifier#applyTo:85«'1","inputs":["todo.TodoAppUI#getContents:118"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents:118","sink":"»rescala.extra.Tags#REFragModifier#applyTo:85«'1"},
-{"type":"Create","resource":"»rescala.extra.Tags#REFragModifier#applyTo:85«'2","inputs":["todo.TodoAppUI#getContents:121"]},
-{"type":"Discover","source":"todo.TodoAppUI#getContents:121","sink":"»rescala.extra.Tags#REFragModifier#applyTo:85«'2"},
-
-
-    ];
+];
     
     onMount(() => {
         ctx = canvas.getContext('2d', { desynchronized: true });
@@ -133,7 +91,7 @@
     };
 
     interface Node {
-        id?: string,
+        id?: number,
         label: string,
         value: string,
         layer?: number,
@@ -166,24 +124,27 @@
     for (let event of reScalaEvents) {
         if (event.type === 'Create') {
             let newNode: Node = {
-                id: event.resource,
-                label: event.resource.split('#').at(-1).split(':')[0].split(' ').at(-1).split('.').at(-1),
-                value: '0'
+                id: event.resource.idCounter,
+                label: event.resource.enclosing.split('#').at(-1).split(':')[0].split(' ').at(-1).split('.').at(-1),
+                value: null
             };
             nodes.push(newNode);
 
             if (!event.inputs) continue;
 
             for (let input of event.inputs) {
-                let node = nodes.find(x => x.id === input);
+                let node = nodes.find(x => x.id === input.idCounter);
                 if (node) edges.push({ from: node, to: newNode });
             }
         } else if (event.type === 'Discover') {
-            let n1 = nodes.find(x => x.id === event.source);
-            let n2 = nodes.find(x => x.id === event.sink);
+            let n1 = nodes.find(x => x.id === event.source.idCounter);
+            let n2 = nodes.find(x => x.id === event.sink.idCounter);
             if (n1 && n2 && !edges.some(x => x.from === n1 && x.to === n2)) {
                 edges.push({ from: n1, to: n2 });
             }
+        } else if (event.type === 'Value') {
+            let n = nodes.find(x => x.id === event.source.idCounter);
+            n.value = event.value;
         }
     }
 
@@ -352,7 +313,7 @@
             let wanted = 1;
             let delta = Math.max(wanted - dist, 0);
 
-            let force = 0.8 * delta;
+            let force = 0.5 * delta;
             node.a -= force;
             node.neighbor.a += force;
         }
@@ -474,10 +435,10 @@
             ctx.fillStyle = 'white';
             ctx.fillText(label, x+NODE_WIDTH/2, y+NODE_HEIGHT/2);
 
-            /*
-            ctx.font = '10px Inter';
-            ctx.fillText(value, x+50, y+40);
-            */
+            if (node.value !== null) {
+                ctx.font = '10px Inter';
+                ctx.fillText(value, x+NODE_WIDTH/2, y+60);
+            }
         }
 
         if (showNodeBoundingBoxes) {
