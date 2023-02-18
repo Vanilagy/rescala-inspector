@@ -18,7 +18,8 @@ export default defineConfig({
             },
             plugins: [watch({ dir: 'extension' })]
         },
-        minify: false
+        minify: false,
+        sourcemap: 'inline'
     },
     plugins: [
         svelte(),
