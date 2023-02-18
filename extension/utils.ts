@@ -27,3 +27,5 @@ export const catmullRom = (t: number, p0: number, p1: number, p2: number, p3: nu
 
     return point;
 };
+
+export const lerp = (a: number, b: number, t: number) => a * (1 - t) + b * t;

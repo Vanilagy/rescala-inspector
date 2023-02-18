@@ -1,19 +1,26 @@
 import type { Graph, GraphNode } from "./graph";
 import { GraphLayout } from "./graph_layout";
-import { catmullRom, quadraticBezierDerivative, remove, roundedRect } from "./utils";
+import { EaseType, Tweened } from "./tween";
+import { catmullRom, lerp, quadraticBezierDerivative, remove, roundedRect } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 const NODE_WIDTH = 150;
 const NODE_HEIGHT = 70;
 
 export class RenderedNode {
-    layer: number;
-    x: number;
+    layer: number = 0;
+    x: number = 0;
     a: number;
     in: RenderedNode[] = [];
     out: RenderedNode[] = [];
     component: number = null;
     neighbor: RenderedNode = null;
+    tweenedPosition = new Tweened<{ x: number, y: number}>(
+        null,
+        1000,
+        (a, b, t) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }),
+        EaseType.EaseOutElasticHalf
+    );
 
     constructor(public node?: GraphNode) {}
 
@@ -25,11 +32,20 @@ export class RenderedNode {
         return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
     }
 
-    get visualPosition() {
+    computePosition() {
         let x = 350 * -this.layer;
         let y = 100 * this.x;
 
         return { x, y };
+    }
+
+    get visualPosition() {
+        let actualPosition = this.computePosition();
+        if (!this.tweenedPosition.target || this.tweenedPosition.target.x !== actualPosition.x || this.tweenedPosition.target.y !== actualPosition.y) {
+            this.tweenedPosition.target = actualPosition;
+        }
+
+        return this.tweenedPosition.value;
     }
 
     get visualCenter() {
