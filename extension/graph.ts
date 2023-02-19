@@ -51,7 +51,6 @@ export class Graph extends Emitter<{
     }
 
     removeEdge(edge: GraphEdge) {
-        console.log(this.edges.length, edge);
         remove(this.edges, edge);
         this.emit('change');
     }
