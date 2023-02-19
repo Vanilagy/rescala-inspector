@@ -4,10 +4,10 @@ export class Tweened<T> {
     private lastChangedAt = -Infinity;
 
     constructor(
-        public initial: T,
-        public duration: number,
-        public lerp: (a: T, b: T, t: number) => T,
-        public easing: EaseType = EaseType.EaseInOutQuad
+        private initial: T,
+        private duration: number,
+        private lerp: (a: T, b: T, t: number) => T,
+        private easing: EaseType = EaseType.EaseInOutQuad
     ) {
         this.from = initial;
         this.to = initial;

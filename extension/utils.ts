@@ -15,6 +15,10 @@ export const roundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number,
     ctx.closePath();
 };
 
+export const quadraticBezier = (p0: number, p1: number, p2: number, t: number) => {
+    return p1 + (p0-p1)*(1-t)**2 + (p2-p1)*t**2;
+};
+
 export const quadraticBezierDerivative = (p0: number, p1: number, p2: number, t: number) => {
     return 2*(1-t)*(p1-p0) + 2*t*(p2-p1);
 };
@@ -29,3 +33,5 @@ export const catmullRom = (t: number, p0: number, p1: number, p2: number, p3: nu
 };
 
 export const lerp = (a: number, b: number, t: number) => a * (1 - t) + b * t;
+
+export const saturate = (x: number) => Math.min(Math.max(x, 0), 1);

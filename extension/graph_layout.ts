@@ -1,17 +1,100 @@
-import { RenderedNode, type RenderedEdge, type RenderedGraph } from "./rendered_graph";
+import type { Graph, GraphNode } from "./graph";
+import { NODE_WIDTH, NODE_HEIGHT } from "./rendered_graph";
+import { remove } from "./utils";
+
+const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
+
+export class LayoutNode {
+    layer: number = 0;
+    x: number = 0;
+    a: number;
+    in: LayoutNode[] = [];
+    out: LayoutNode[] = [];
+    component: number = null;
+    neighbor: LayoutNode = null;
+
+    constructor(public node?: GraphNode) {}
+
+    get isDummy() {
+        return !this.node;
+    }
+
+    get height() {
+        return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
+    }
+
+    computePosition(center = false) {
+        let x = 350 * -this.layer;
+        let y = 100 * this.x;
+        let pos = { x, y };
+        
+        if (center) {
+            pos.x += NODE_WIDTH/2;
+            pos.y += NODE_HEIGHT/2 * this.height;
+        }
+
+        return pos;
+    }
+
+    posOnBorder(angle: number) {
+        let { x: centerX, y: centerY } = this.computePosition(true);
+
+        let margin = 7;
+        let extendedWidth = NODE_WIDTH/2 + margin;
+        let extendedHeight = NODE_HEIGHT/2 + margin;
+
+        let x = Math.cos(angle) * extendedWidth;
+        let y = Math.sin(angle) * extendedHeight;
+
+        if (Math.abs(Math.tan(angle)) < 1) { // equiv to Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
+            let fac = extendedWidth / Math.abs(x);
+            x *= fac;
+            y *= fac;
+        } else {
+            let fac = extendedHeight / Math.abs(y);
+            x *= fac;
+            y *= fac;
+        }
+
+        return {
+            x: centerX + x,
+            y: centerY + y
+        };
+    }
+}
+
+export class LayoutEdge extends Array<LayoutNode> {
+    waypoints: LayoutNode[] = [this[0], this[1]];
+
+    get span() {
+        return this[0].layer - this[1].layer;
+    }
+}
 
 export class GraphLayout {
-    constructor(public renderedGraph: RenderedGraph) {}
+    nodes: LayoutNode[] = [];
+    edges: LayoutEdge[] = [];
 
-    get nodes() {
-        return this.renderedGraph.renderedNodes;
+    constructor(public graph: Graph) {}
+
+    addNode(layoutNode: LayoutNode) {
+        this.nodes.push(layoutNode);
     }
 
-    get edges() {
-        return this.renderedGraph.renderedEdges;
+    addEdge(from: LayoutNode, to: LayoutNode) {
+        this.edges.push(new LayoutEdge(from, to));
+
+        from.out.push(to);
+        to.in.push(from);
     }
 
-    layOutNodes() {
+    removeEdge(edge: LayoutEdge) {
+        remove(this.edges, edge);
+        remove(edge[0].out, edge[1]);
+        remove(edge[1].in, edge[0]);
+    }
+
+    layOut() {
         this.assignLayers();
         this.createDummyNodes();
         this.assignComponents();
@@ -19,9 +102,27 @@ export class GraphLayout {
         this.solve();
     }
 
+    reconcile() {
+        for (let node of this.graph.nodes) {
+            if (this.nodes.some(x => x.node === node)) continue;
+            let layoutNode = new LayoutNode(node);
+            this.addNode(layoutNode);
+        }
+
+        for (let edge of [...this.edges]) this.removeEdge(edge);
+
+        for (let edge of this.graph.edges) {
+            let from = this.nodes.find(x => x.node === edge[0]);
+            let to = this.nodes.find(x => x.node === edge[1]);
+
+            if (from.out.includes(to)) continue;
+            this.addEdge(from, to);
+        }
+    }
+
     assignLayers() {
-        let longestOutgoingPathCache = new Map<RenderedNode, number>();
-        const longestOutgoingPath = (node: RenderedNode) => {
+        let longestOutgoingPathCache = new Map<LayoutNode, number>();
+        const longestOutgoingPath = (node: LayoutNode) => {
             if (longestOutgoingPathCache.has(node)) return longestOutgoingPathCache.get(node);
 
             let res: number;
@@ -34,7 +135,7 @@ export class GraphLayout {
         for (let node of this.nodes) node.layer = longestOutgoingPath(node);
 
         // See if long edges can be shortened
-        let done = new Set<RenderedEdge>();
+        let done = new Set<LayoutEdge>();
         while (true) {
             let nextEdge = this.edges
                 .filter(x => x.span >= 2)
@@ -82,41 +183,43 @@ export class GraphLayout {
             let edge = this.edges[j];
             if (edge.span <= 1) continue;
 
-            this.renderedGraph.removeEdge(edge);
+            this.removeEdge(edge);
             j--;
 
             let prevNode = edge[0];
             for (let i = edge[0].layer; i > edge[1].layer; i--) {
                 let nextNode = i === edge[1].layer + 1
                     ? edge[1]
-                    : new RenderedNode();
+                    : new LayoutNode();
                 nextNode.layer = i - 1;
 
-                if (nextNode !== edge[1]) this.renderedGraph.addNode(nextNode);
-                this.renderedGraph.addEdge(prevNode, nextNode);
+                if (nextNode !== edge[1]) this.addNode(nextNode);
+                this.addEdge(prevNode, nextNode);
 
                 prevNode = nextNode;
             }
+
+            console.log(edge);
         }
     }
 
     assignComponents() {
-        for (let node of this.renderedGraph.renderedNodes) node.component = null;
+        for (let node of this.nodes) node.component = null;
 
-        const computeComponent = (node: RenderedNode, i: number) => {
+        const computeComponent = (node: LayoutNode, i: number) => {
             if (node.component !== null) return;
 
             node.component = i;
             for (let child of node.out) computeComponent(child, i);
             for (let parent of node.in) computeComponent(parent, i);
         };
-        this.renderedGraph.renderedNodes.filter(x => x.in.length === 0).forEach(computeComponent);
+        this.nodes.filter(x => x.in.length === 0).forEach(computeComponent);
     }
 
     computeNeighbors() {
-        for (let node of this.renderedGraph.renderedNodes) node.neighbor = null;
+        for (let node of this.nodes) node.neighbor = null;
 
-        let sortedNodes = [...this.renderedGraph.renderedNodes].sort((a, b) => a.x - b.x).sort((a, b) => a.layer - b.layer);
+        let sortedNodes = [...this.nodes].sort((a, b) => a.x - b.x).sort((a, b) => a.layer - b.layer);
         for (let i = 0; i < sortedNodes.length-1; i++) {
             let n1 = sortedNodes[i];
             let n2 = sortedNodes[i+1];
@@ -128,11 +231,9 @@ export class GraphLayout {
     }
 
     spreadOut(factor = 1) {
-        let { renderedNodes: nodes } = this.renderedGraph;
-
-        let highestLayer = Math.max(...nodes.map(x => x.layer));
+        let highestLayer = Math.max(...this.nodes.map(x => x.layer));
         for (let layer = 0; layer <= highestLayer; layer++) {
-            nodes
+            this.nodes
                 .filter(x => x.layer === layer)
                 .sort((a, b) => a.x - b.x)
                 .sort((a, b) => a.component - b.component)
@@ -141,7 +242,7 @@ export class GraphLayout {
     }
 
     decross() {
-        let last: RenderedNode[] = null;
+        let last: LayoutNode[] = null;
 
         let j: number;
         for (j = 0; j < 100; j++) {
@@ -156,10 +257,8 @@ export class GraphLayout {
     }
 
     computeForces(noCollision: boolean) {
-        let { renderedNodes: nodes, renderedEdges: edges } = this.renderedGraph;
-
-        for (let node of nodes) node.a = 0;
-        for (let edge of edges) {
+        for (let node of this.nodes) node.a = 0;
+        for (let edge of this.edges) {
             let force = (edge[0].x + edge[0].height/2) - (edge[1].x + edge[1].height/2);
             if (noCollision) force = edge[0].x - edge[1].x;
 
@@ -169,7 +268,7 @@ export class GraphLayout {
 
         if (noCollision) return;
 
-        for (let node of nodes) {
+        for (let node of this.nodes) {
             if (!node.neighbor) continue
 
             // Spring force between nodes of the same layer
@@ -182,8 +281,8 @@ export class GraphLayout {
             node.neighbor.a += force;
         }
 
-        let did = new Set<RenderedNode>();
-        for (let node of nodes) {
+        let did = new Set<LayoutNode>();
+        for (let node of this.nodes) {
             if (did.has(node)) continue;
 
             let connected = [node];
