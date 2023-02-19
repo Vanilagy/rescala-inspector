@@ -1,7 +1,7 @@
 export class Tweened<T> {
-    from: T = null;
-    to: T = null;
-    lastChangedAt = -Infinity;
+    private from: T = null;
+    private to: T = null;
+    private lastChangedAt = -Infinity;
 
     constructor(
         public initial: T,
@@ -13,7 +13,7 @@ export class Tweened<T> {
         this.to = initial;
     }
 
-    public get value() {
+    get value() {
         if (this.to === null) return null;
 
         let elapsed = document.timeline.currentTime - this.lastChangedAt;
@@ -21,11 +21,11 @@ export class Tweened<T> {
         return this.lerp(this.from, this.to, ease(t, this.easing));
     }
 
-    public get target() {
+    get target() {
         return this.to;
     }
 
-    public set target(newTarget: T) {
+    set target(newTarget: T) {
         this.from = this.value ?? newTarget;
         this.to = newTarget;
         this.lastChangedAt = document.timeline.currentTime;

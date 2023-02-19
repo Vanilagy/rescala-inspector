@@ -6,6 +6,7 @@ import { catmullRom, lerp, quadraticBezierDerivative, remove, roundedRect } from
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 const NODE_WIDTH = 150;
 const NODE_HEIGHT = 70;
+const EDGE_ANIMATION_START = 0.5;
 
 export class RenderedNode {
     layer: number = 0;
@@ -19,10 +20,18 @@ export class RenderedNode {
         null,
         1000,
         (a, b, t) => ({ x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t) }),
-        EaseType.EaseOutElasticHalf
+        EaseType.EaseOutElasticQuarter
+    );
+    visibility = new Tweened(
+        0,
+        1000,
+        lerp,
+        EaseType.EaseOutQuint
     );
 
-    constructor(public node?: GraphNode) {}
+    constructor(public node?: GraphNode) {
+        this.visibility.target = 1;
+    }
 
     get isDummy() {
         return !this.node;
@@ -45,13 +54,22 @@ export class RenderedNode {
             this.tweenedPosition.target = actualPosition;
         }
 
-        return this.tweenedPosition.value;
+        let visibility = this.visibility.value;
+        let pos = this.tweenedPosition.value;
+
+        pos.y -= (1-visibility) * 100;
+
+        return pos;
+    }
+
+    get visualHeight() {
+        return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.visibility.value);
     }
 
     get visualCenter() {
         let pos = this.visualPosition;
         pos.x += NODE_WIDTH/2;
-        if (!this.isDummy) pos.y += NODE_HEIGHT/2;
+        if (!this.isDummy) pos.y += this.visualHeight/2;
 
         return pos;
     }
@@ -61,7 +79,7 @@ export class RenderedNode {
 
         let margin = 7;
         let extendedWidth = NODE_WIDTH/2 + margin;
-        let extendedHeight = NODE_HEIGHT/2 + margin;
+        let extendedHeight = this.visualHeight/2 + margin;
 
         let x = Math.cos(angle) * extendedWidth;
         let y = Math.sin(angle) * extendedHeight;
@@ -152,11 +170,15 @@ export class RenderedGraph {
         let { ctx } = this;
         let { x, y } = node.visualPosition;
 
+        if (node.visibility.target === 0) node.visibility.target = 1;
+
+        this.ctx.globalAlpha = node.visibility.value;
+
         if (!node.isDummy) {
             let label = node.node.label;
             let value = node.node.value;
 
-            roundedRect(ctx, x, y, NODE_WIDTH, NODE_HEIGHT, 6);
+            roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight, 6);
 
             ctx.strokeStyle = '#474a52';
             ctx.lineWidth = 4;
@@ -169,11 +191,11 @@ export class RenderedGraph {
             ctx.font = '14px Inter';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = 'white';
-            ctx.fillText(node.node.id + ' | ' + label, x + NODE_WIDTH/2, y + NODE_HEIGHT/2);
+            ctx.fillText(node.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight/2);
 
             if (node.node.value !== null) {
                 ctx.font = '10px Inter';
-                ctx.fillText(value, x+NODE_WIDTH/2, y+60);
+                ctx.fillText(value, x+NODE_WIDTH/2, y + node.visualHeight - 10);
             }
         }
 
@@ -184,12 +206,18 @@ export class RenderedGraph {
             ctx.fill();
             ctx.globalAlpha = 1;
         }
+
+        this.ctx.globalAlpha = 1;
     }
 
     drawEdge(edge: RenderedEdge, n: number) {
         let { ctx } = this;
 
         if (edge[0].isDummy) return;
+
+        // TODO: Transition from direct edge to dummy edge is wonky
+        let visibility = edge[0].visibility.value * edge[1].visibility.value;
+        ctx.globalAlpha = visibility;
 
         if (!edge[1].isDummy) {
             ctx.beginPath();
@@ -205,6 +233,9 @@ export class RenderedGraph {
 
             let { x: x1, y: y1 } = edge[0].posOnBorder(angle);
             let { x: x2, y: y2 } = edge[1].posOnBorder(Math.PI + angle);
+
+            x2 = lerp(x1, x2, lerp(EDGE_ANIMATION_START, 1, visibility));
+            y2 = lerp(y1, y2, lerp(EDGE_ANIMATION_START, 1, visibility));
 
             let cpx = (x1+x2)/2;
             let cpy = 0.2*y1 + 0.8*y2;
@@ -236,6 +267,11 @@ export class RenderedGraph {
 
                 if (i === 0) points.push(p1);
                 points.push(p2);
+            }
+
+            for (let point of points) {
+                point.x = lerp(points[0].x, point.x, lerp(EDGE_ANIMATION_START, 1, visibility));
+                point.y = lerp(points[0].y, point.y, lerp(EDGE_ANIMATION_START, 1, visibility));
             }
 
             points.unshift({
@@ -271,6 +307,8 @@ export class RenderedGraph {
 
             this.drawArrow(n, points.at(-2).x, points.at(-2).y, angle);
         }
+
+        ctx.globalAlpha = 1;
     }
 
     drawArrow(n: number, endX: number, endY: number, endAngle: number) {
@@ -300,15 +338,22 @@ export class RenderedGraph {
         this.graphHasChanged = false;
 
         for (let node of this.graph.nodes) {
+            if (this.nodeToRenderedNode.has(node)) continue;
             let renderedNode = new RenderedNode(node);
             this.addNode(renderedNode);
         }
 
+        for (let edge of [...this.renderedEdges]) this.removeEdge(edge);
+
         for (let edge of this.graph.edges) {
             let from = this.nodeToRenderedNode.get(edge[0]);
             let to = this.nodeToRenderedNode.get(edge[1]);
+
+            if (from.out.includes(to)) continue;
             this.addEdge(from, to);
         }
+        
+        console.log("baked", this.renderedEdges.filter(x => x[0].node?.id === 62 && x[1].node?.id === 9))
 
         this.layout.layOutNodes();
     }
