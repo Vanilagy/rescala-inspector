@@ -58,8 +58,6 @@ export class Graph extends Emitter<{
 
     processReScalaEvents(events: ReScalaEvent[]) {
         for (let event of events) this.processReScalaEvent(event);
-        
-        console.log("raw", this.edges.filter(x => x[0].id === 62 && x[1].id === 9))
     }
 
     processReScalaEvent(event: ReScalaEvent) {

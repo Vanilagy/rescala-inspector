@@ -352,8 +352,6 @@ export class RenderedGraph {
             if (from.out.includes(to)) continue;
             this.addEdge(from, to);
         }
-        
-        console.log("baked", this.renderedEdges.filter(x => x[0].node?.id === 62 && x[1].node?.id === 9))
 
         this.layout.layOutNodes();
     }
