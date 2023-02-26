@@ -34,4 +34,14 @@ export const catmullRom = (t: number, p0: number, p1: number, p2: number, p3: nu
 
 export const lerp = (a: number, b: number, t: number) => a * (1 - t) + b * t;
 
+export interface Point {
+    x: number,
+    y: number
+}
+export type Path = Point[];
+
+export const lerpPoints = (p1: Point, p2: Point, t: number): Point => {
+    return { x: lerp(p1.x, p2.x, t), y: lerp(p1.y, p2.y, t) };
+};
+
 export const saturate = (x: number) => Math.min(Math.max(x, 0), 1);

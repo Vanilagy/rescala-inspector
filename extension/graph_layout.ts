@@ -1,6 +1,7 @@
 import type { Graph, GraphNode } from "./graph";
-import { NODE_WIDTH, NODE_HEIGHT } from "./rendered_graph";
-import { remove } from "./utils";
+import { NODE_WIDTH, NODE_HEIGHT, ANIMATION_DURATION } from "./rendered_graph";
+import { EaseType, Tweened } from "./tween";
+import { lerp, lerpPoints, remove } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
@@ -13,7 +14,22 @@ export class LayoutNode {
     component: number = null;
     neighbor: LayoutNode = null;
 
-    constructor(public node?: GraphNode) {}
+    tweenedPosition = new Tweened<{ x: number, y: number}>(
+        null,
+        ANIMATION_DURATION,
+        lerpPoints,
+        EaseType.EaseOutElasticQuarter
+    );
+    visibility = new Tweened(
+        0,
+        ANIMATION_DURATION,
+        lerp,
+        EaseType.EaseOutQuint
+    );
+
+    constructor(public node?: GraphNode) {
+        this.visibility.target = 1;
+    }
 
     get isDummy() {
         return !this.node;
@@ -27,17 +43,43 @@ export class LayoutNode {
         let x = 350 * -this.layer;
         let y = 100 * this.x;
         let pos = { x, y };
-        
+
         if (center) {
             pos.x += NODE_WIDTH/2;
-            pos.y += NODE_HEIGHT/2 * this.height;
+            pos.y += NODE_HEIGHT/2;
         }
 
         return pos;
     }
 
-    posOnBorder(angle: number) {
-        let { x: centerX, y: centerY } = this.computePosition(true);
+    visualPosition(time?: number) {
+        let actualPosition = this.computePosition();
+        if (!this.tweenedPosition.target || this.tweenedPosition.target.x !== actualPosition.x || this.tweenedPosition.target.y !== actualPosition.y) {
+            this.tweenedPosition.target = actualPosition;
+        }
+
+        let visibility = this.visibility.valueAt(time);
+        let pos = this.tweenedPosition.valueAt(time);
+
+        pos.y -= (1 - visibility) * 100;
+
+        return pos;
+    }
+
+    visualHeight(time?: number) {
+        return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.visibility.valueAt(time));
+    }
+
+    visualCenter(time?: number) {
+        let pos = this.visualPosition(time);
+        pos.x += NODE_WIDTH/2;
+        pos.y += this.visualHeight(time)/2;
+
+        return pos;
+    }
+
+    posOnBorder(angle: number, time?: number) {
+        let { x: centerX, y: centerY } = this.visualCenter(time);
 
         let margin = 7;
         let extendedWidth = NODE_WIDTH/2 + margin;
@@ -65,6 +107,10 @@ export class LayoutNode {
 
 export class LayoutEdge extends Array<LayoutNode> {
     waypoints: LayoutNode[] = [this[0], this[1]];
+
+    constructor(from: LayoutNode, to: LayoutNode) {
+        super(from, to);
+    }
 
     get span() {
         return this[0].layer - this[1].layer;
@@ -198,8 +244,6 @@ export class GraphLayout {
 
                 prevNode = nextNode;
             }
-
-            console.log(edge);
         }
     }
 

@@ -4,20 +4,31 @@ export class Tweened<T> {
     private lastChangedAt = -Infinity;
 
     constructor(
-        private initial: T,
-        private duration: number,
+        initial: T,
+        private duration: number | ((from: T, to: T) => number),
         private lerp: (a: T, b: T, t: number) => T,
-        private easing: EaseType = EaseType.EaseInOutQuad
+        private easing: EaseType = EaseType.EaseInOutQuad,
+        private returnInputs = false
     ) {
         this.from = initial;
         this.to = initial;
     }
 
     get value() {
+        return this.valueAt();
+    }
+
+    valueAt(time = document.timeline.currentTime) {
         if (this.to === null) return null;
 
-        let elapsed = document.timeline.currentTime - this.lastChangedAt;
-        let t = Math.min(elapsed / this.duration, 1);
+        let elapsed = time - this.lastChangedAt;
+        let duration = typeof this.duration === 'number' ? this.duration : this.duration(this.from, this.to);
+        let t = Math.min(Math.max(elapsed / duration, 0), 1);
+
+        if (this.returnInputs) {
+            if (t === 0) return this.from;
+            if (t === 1) return this.to;
+        }
         return this.lerp(this.from, this.to, ease(t, this.easing));
     }
 

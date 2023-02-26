@@ -3,6 +3,12 @@
     import { Graph, type GraphNode, type ReScalaEvent } from "./graph";
     import { RenderedGraph } from "./rendered_graph";
 
+    /**
+     * TODO
+     * - popups
+     * - live integration
+     */
+
     let canvas: HTMLCanvasElement;
 
     let innerWidth = window.innerWidth;
@@ -236,19 +242,22 @@
     const eventGroups = [firstReScalaEvents, secondReScalaEvents, thirdReScalaEvents, fourthReScalaEvents, fifthReScalaEvents, sixthReScalaEvents];
 
     let graph = new Graph();
-    //graph.processReScalaEvents(eventGroups[0]);
+    graph.processReScalaEvents(eventGroups[0]);
 
+    
     
     let n1: GraphNode = { id: 0, label: '', value: null };
     let n2: GraphNode = { id: 1, label: '', value: null };
     let n3: GraphNode = { id: 2, label: '', value: null };
-    graph.addNode(n1);
-    graph.addNode(n3);
-    graph.addEdge(n1, n3);
+    //graph.addNode(n1);
+    //graph.addNode(n3);
+    //graph.addEdge(n1, n3);
+    
     
 
     let i = 1;
     const loadNextEvents = () => {
+        /*
         let edge = graph.edges.find(x => x[0] === n1 && x[1] === n2);
         if (edge) {
             graph.removeEdge(edge);
@@ -260,6 +269,8 @@
         graph.addEdge(n2, n3);
         
         return;
+        */
+        
         graph.processReScalaEvents(eventGroups[i++]);
     };
 
