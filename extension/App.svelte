@@ -4,11 +4,11 @@
     import { fly } from "svelte/transition";
     import { Graph, type GraphNode, type ReScalaEvent } from "./graph";
     import type { LayoutNode } from "./graph_layout";
-    import { RenderedGraph } from "./rendered_graph";
+    import { NODE_HEIGHT, RenderedGraph } from "./rendered_graph";
+    import { clamp } from "./utils";
 
     /**
      * TODO
-     * - popups
      * - live integration
      */
 
@@ -306,6 +306,31 @@
         renderedGraph.originY = (renderedGraph.originY - e.clientY) * scaleChange + e.clientY;
         renderedGraph.scale *= scaleChange;
     };
+
+    $: popupStyle = (() => {
+        if (!$hoveredNode) return;
+
+        let width = 208;
+        let height = 128;
+        let left = clamp($hoveredNode.visualCenter().x * renderedGraph.scale + renderedGraph.originX - width/2, 10, window.innerWidth - width - 10);
+        let top = $hoveredNode.visualPosition().y * renderedGraph.scale + renderedGraph.originY - height;
+        let paddingTop = 0;
+        let paddingBottom = 10;
+
+        if (top < 10) {
+            top += height + NODE_HEIGHT * renderedGraph.scale;
+            [paddingTop, paddingBottom] = [paddingBottom, paddingTop];
+        }
+
+        return {
+            width,
+            height,
+            left,
+            top,
+            paddingTop,
+            paddingBottom
+        };
+    })();
 </script>
 
 <svelte:head>
@@ -342,11 +367,13 @@
 {#if $hoveredNode}
     <div
         transition:fly={{y: -10, duration: 150}}
-        class="w-52 h-32 absolute -translate-x-1/2 -translate-y-full pb-2.5 text-xs"
-        style="
-            left: {$hoveredNode.visualCenter().x * renderedGraph.scale + renderedGraph.originX}px;
-            top: {$hoveredNode.visualPosition().y * renderedGraph.scale + renderedGraph.originY}px;
-        "
+        class="absolute text-xs"
+        style:width={popupStyle.width + 'px'}
+        style:height={popupStyle.height + 'px'}
+        style:left={popupStyle.left + 'px'}
+        style:top={popupStyle.top + 'px'}
+        style:padding-top={popupStyle.paddingTop + 'px'}
+        style:padding-bottom={popupStyle.paddingBottom + 'px'}
     >
         <div class="w-full h-full bg-zinc-700 shadow rounded-md p-2 px-3 space-y-3">
             <p class="truncate"><span class="opacity-50 font-bold uppercase text-[11px]">Label</span><br>{$hoveredNode.node.label}</p>

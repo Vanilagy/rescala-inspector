@@ -45,3 +45,5 @@ export const lerpPoints = (p1: Point, p2: Point, t: number): Point => {
 };
 
 export const saturate = (x: number) => Math.min(Math.max(x, 0), 1);
+
+export const clamp = (x: number, min: number, max: number) => x < min ? min : (x > max ? max : x);

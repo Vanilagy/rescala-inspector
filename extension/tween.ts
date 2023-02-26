@@ -1,3 +1,5 @@
+import { saturate } from "./utils";
+
 export class Tweened<T> {
     private from: T = null;
     private to: T = null;
@@ -23,7 +25,7 @@ export class Tweened<T> {
 
         let elapsed = time - this.lastChangedAt;
         let duration = typeof this.duration === 'number' ? this.duration : this.duration(this.from, this.to);
-        let t = Math.min(Math.max(elapsed / duration, 0), 1);
+        let t = saturate(elapsed / duration);
 
         if (this.returnInputs) {
             if (t === 0) return this.from;
