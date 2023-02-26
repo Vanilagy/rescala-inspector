@@ -1,7 +1,8 @@
+import { get, writable } from "svelte/store";
 import type { Graph, GraphNode } from "./graph";
 import { GraphLayout, LayoutNode } from "./graph_layout";
 import { EaseType, Tweened } from "./tween";
-import { catmullRom, lerp, lerpPoints, quadraticBezier, quadraticBezierDerivative, remove, roundedRect, saturate, type Path } from "./utils";
+import { catmullRom, lerp, lerpPoints, quadraticBezier, quadraticBezierDerivative, remove, roundedRect, saturate, type Path, type Point } from "./utils";
 
 export const NODE_WIDTH = 150;
 export const NODE_HEIGHT = 70;
@@ -13,11 +14,11 @@ export class RenderedGraph {
     originY = 200;
     scale = 0.5;
     showNodeBoundingBoxes = false;
-
+    layout: GraphLayout;
     renderedEdges: RenderedEdge[] = [];
     graphHasChanged = true;
-
-    layout: GraphLayout;
+    hoveredNode = writable<LayoutNode>(null);
+    mousePosition: Point = { x: 0, y: 0 };
 
     constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
         graph.on('change', () => this.graphHasChanged = true);
@@ -50,6 +51,8 @@ export class RenderedGraph {
         for (let node of this.layout.nodes) {
             this.drawNode(node);
         }
+
+        this.checkHover();
     }
 
     drawNode(node: LayoutNode) {
@@ -64,7 +67,7 @@ export class RenderedGraph {
 
             roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
 
-            ctx.strokeStyle = '#474a52';
+            ctx.strokeStyle = get(this.hoveredNode) === node ? 'white' : '#474a52';
             ctx.lineWidth = 4;
             ctx.stroke();
 
@@ -188,6 +191,36 @@ export class RenderedGraph {
             edge.visibility.target = 0;
             edge.tweenedPath.target = edge.computePath(Infinity);
         }
+    }
+
+    supplyMousePosition(position: Point) {
+        this.mousePosition = position;
+    }
+
+    checkHover() {
+        let newNode: LayoutNode = null;
+        let mouseX = (this.mousePosition.x - this.originX) / this.scale;
+        let mouseY = (this.mousePosition.y - this.originY) / this.scale;
+
+        for (let node of this.layout.nodes) {
+            if (node.isDummy) continue;
+
+            let minPos = node.visualPosition();
+            let maxPos = structuredClone(minPos);
+            maxPos.x += NODE_WIDTH;
+            maxPos.y += NODE_HEIGHT;
+
+            if (
+                mouseX >= minPos.x
+                && mouseX < maxPos.x
+                && mouseY >= minPos.y
+                && mouseY < maxPos.y
+            ) {
+                newNode = node;
+            }
+        }
+
+        this.hoveredNode.set(newNode);
     }
 }
 

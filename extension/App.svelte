@@ -1,6 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import type { Writable } from "svelte/store";
+    import { fly } from "svelte/transition";
     import { Graph, type GraphNode, type ReScalaEvent } from "./graph";
+    import type { LayoutNode } from "./graph_layout";
     import { RenderedGraph } from "./rendered_graph";
 
     /**
@@ -243,8 +246,6 @@
 
     let graph = new Graph();
     graph.processReScalaEvents(eventGroups[0]);
-
-    
     
     let n1: GraphNode = { id: 0, label: '', value: null };
     let n2: GraphNode = { id: 1, label: '', value: null };
@@ -275,8 +276,10 @@
     };
 
     let renderedGraph: RenderedGraph;
+    let hoveredNode: Writable<LayoutNode>;
     onMount(() => {
         renderedGraph = new RenderedGraph(graph, canvas);
+        hoveredNode = renderedGraph.hoveredNode;
 
         const render = () => {
             renderedGraph.render();
@@ -286,6 +289,8 @@
     });
 
     const onMouseMove = (e: MouseEvent) => {
+        renderedGraph.supplyMousePosition({ x: e.clientX, y: e.clientY });
+
         if (!spacePressed || !mouseHeld) return;
 
         renderedGraph.originX += e.movementX; 
@@ -333,3 +338,19 @@
     on:mousemove={onMouseMove}
     on:wheel={onWheel}
 />
+
+{#if $hoveredNode}
+    <div
+        transition:fly={{y: -10, duration: 150}}
+        class="w-52 h-32 absolute -translate-x-1/2 -translate-y-full pb-2.5 text-xs"
+        style="
+            left: {$hoveredNode.visualCenter().x * renderedGraph.scale + renderedGraph.originX}px;
+            top: {$hoveredNode.visualPosition().y * renderedGraph.scale + renderedGraph.originY}px;
+        "
+    >
+        <div class="w-full h-full bg-zinc-700 shadow rounded-md p-2 px-3 space-y-3">
+            <p class="truncate"><span class="opacity-50 font-bold uppercase text-[11px]">Label</span><br>{$hoveredNode.node.label}</p>
+            <p class="truncate"><span class="opacity-50 font-bold uppercase text-[11px]">Value</span><br>{$hoveredNode.node.value}</p>
+        </div>
+    </div>
+{/if}
