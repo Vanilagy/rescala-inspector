@@ -245,7 +245,7 @@
     const eventGroups = [firstReScalaEvents, secondReScalaEvents, thirdReScalaEvents, fourthReScalaEvents, fifthReScalaEvents, sixthReScalaEvents];
 
     let graph = new Graph();
-    graph.processReScalaEvents(eventGroups[0]);
+    //graph.processReScalaEvents(eventGroups[0]);
     
     let n1: GraphNode = { id: 0, label: '', value: null };
     let n2: GraphNode = { id: 1, label: '', value: null };
@@ -272,7 +272,7 @@
         return;
         */
         
-        graph.processReScalaEvents(eventGroups[i++]);
+        //graph.processReScalaEvents(eventGroups[i++]);
     };
 
     let renderedGraph: RenderedGraph;
@@ -286,6 +286,28 @@
             requestAnimationFrame(render);
         };
         render();
+
+        if (typeof chrome !== 'undefined') {
+            const handle = (result: ReScalaEvent[], isException: any) => {
+                console.log(1);
+                if (isException) {
+                    console.log("exception", isException);
+                    return;
+                }
+
+                graph.processReScalaEvents(result);
+            };
+
+            const getEvents = () => {
+                let events = (window as any).reScalaEvents as ReScalaEvent[];
+                (window as any).reScalaEvents = [];
+                return events;
+            };
+            setInterval(() => {
+                console.log("here");
+                chrome.devtools.inspectedWindow.eval(`(${getEvents.toString()})()`, handle);
+            }, 1000/30);
+        }
     });
 
     const onMouseMove = (e: MouseEvent) => {

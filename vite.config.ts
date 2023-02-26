@@ -16,7 +16,11 @@ export default defineConfig({
                 devtools: join(__dirname, 'extension/devtools.html'),
                 panel: join(__dirname, 'extension/panel.html')
             },
-            plugins: [watch({ dir: 'extension' })]
+            plugins: [watch({ dir: 'extension' })],
+            output: {
+                entryFileNames: `[name].js`,
+                chunkFileNames: `[name].js`
+            }
         },
         minify: false,
         sourcemap: 'inline'
