@@ -1,3 +1,4 @@
+import { get, writable } from "svelte/store";
 import type { Graph, GraphNode } from "./graph";
 import { NODE_WIDTH, NODE_HEIGHT, ANIMATION_DURATION } from "./rendered_graph";
 import { EaseType, Tweened } from "./tween";
@@ -5,121 +6,12 @@ import { lerp, lerpPoints, remove } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
-export class LayoutNode {
-    layer: number = 0;
-    x: number = 0;
-    a: number;
-    in: LayoutNode[] = [];
-    out: LayoutNode[] = [];
-    component: number = null;
-    neighbor: LayoutNode = null;
-
-    tweenedPosition = new Tweened<{ x: number, y: number}>(
-        null,
-        ANIMATION_DURATION,
-        lerpPoints,
-        EaseType.EaseOutElasticQuarter
-    );
-    visibility = new Tweened(
-        0,
-        ANIMATION_DURATION,
-        lerp,
-        EaseType.EaseOutQuint
-    );
-
-    constructor(public node?: GraphNode) {
-        this.visibility.target = 1;
-    }
-
-    get isDummy() {
-        return !this.node;
-    }
-
-    get height() {
-        return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
-    }
-
-    computePosition(center = false) {
-        let x = 350 * -this.layer;
-        let y = 100 * this.x;
-        let pos = { x, y };
-
-        if (center) {
-            pos.x += NODE_WIDTH/2;
-            pos.y += NODE_HEIGHT/2;
-        }
-
-        return pos;
-    }
-
-    visualPosition(time?: number) {
-        let actualPosition = this.computePosition();
-        if (!this.tweenedPosition.target || this.tweenedPosition.target.x !== actualPosition.x || this.tweenedPosition.target.y !== actualPosition.y) {
-            this.tweenedPosition.target = actualPosition;
-        }
-
-        let visibility = this.visibility.valueAt(time);
-        let pos = this.tweenedPosition.valueAt(time);
-
-        pos.y -= (1 - visibility) * 100;
-
-        return pos;
-    }
-
-    visualHeight(time?: number) {
-        return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.visibility.valueAt(time));
-    }
-
-    visualCenter(time?: number) {
-        let pos = this.visualPosition(time);
-        pos.x += NODE_WIDTH/2;
-        pos.y += this.visualHeight(time)/2;
-
-        return pos;
-    }
-
-    posOnBorder(angle: number, time?: number) {
-        let { x: centerX, y: centerY } = this.visualCenter(time);
-
-        let margin = 7;
-        let extendedWidth = NODE_WIDTH/2 + margin;
-        let extendedHeight = NODE_HEIGHT/2 + margin;
-
-        let x = Math.cos(angle) * extendedWidth;
-        let y = Math.sin(angle) * extendedHeight;
-
-        if (Math.abs(Math.tan(angle)) < 1) { // equiv to Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
-            let fac = extendedWidth / Math.abs(x);
-            x *= fac;
-            y *= fac;
-        } else {
-            let fac = extendedHeight / Math.abs(y);
-            x *= fac;
-            y *= fac;
-        }
-
-        return {
-            x: centerX + x,
-            y: centerY + y
-        };
-    }
-}
-
-export class LayoutEdge extends Array<LayoutNode> {
-    waypoints: LayoutNode[] = [this[0], this[1]];
-
-    constructor(from: LayoutNode, to: LayoutNode) {
-        super(from, to);
-    }
-
-    get span() {
-        return this[0].layer - this[1].layer;
-    }
-}
+type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
 
 export class GraphLayout {
     nodes: LayoutNode[] = [];
     edges: LayoutEdge[] = [];
+    pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
 
     constructor(public graph: Graph) {}
 
@@ -132,6 +24,10 @@ export class GraphLayout {
 
         from.out.push(to);
         to.in.push(from);
+    }
+
+    removeNode(layoutNode: LayoutNode) {
+        remove(this.nodes, layoutNode);
     }
 
     removeEdge(edge: LayoutEdge) {
@@ -148,21 +44,65 @@ export class GraphLayout {
         this.solve();
     }
 
+    pathIsShown(node: PathStructureNode, path: string[]) {
+        if (!node.shown) return false;
+        let child = node.children.find(x => x.label === path[0]);
+        if (!child) return true;
+        return this.pathIsShown(child, path.slice(1));
+    }
+
     reconcile() {
-        for (let node of this.graph.nodes) {
+        let paths = this.graph.nodes.map(x => x.reScalaResource.path);
+        for (let path of paths) {
+            let node = get(this.pathStructureRoot);
+            for (let section of path.slice(0, -1)) {
+                if (!node.children.some(x => x.label === section)) {
+                    node.children.push({ label: section, shown: true, children: [] });
+                }
+                node = node.children.find(x => x.label === section);
+            }
+        }
+        this.pathStructureRoot.update(x => x);
+
+        let shownNodes = this.graph.nodes.filter(x => 
+            this.pathIsShown(get(this.pathStructureRoot), x.reScalaResource.path.slice(0, -1))
+        );
+        for (let node of shownNodes) {
             if (this.nodes.some(x => x.node === node)) continue;
             let layoutNode = new LayoutNode(node);
             this.addNode(layoutNode);
         }
+        for (let node of [...this.nodes]) {
+            if (shownNodes.some(x => x === node.node) && !node.isDummy) continue;
+            this.removeNode(node);
+        }
 
         for (let edge of [...this.edges]) this.removeEdge(edge);
 
-        for (let edge of this.graph.edges) {
-            let from = this.nodes.find(x => x.node === edge[0]);
-            let to = this.nodes.find(x => x.node === edge[1]);
+        for (let node of shownNodes) {
+            let edges = this.graph.edges.filter(x => x[0] === node);
+            while (true) {
+                let changed = false;
 
-            if (from.out.includes(to)) continue;
-            this.addEdge(from, to);
+                for (let i = 0; i < edges.length; i++) {
+                    let edge = edges[i];
+                    if (shownNodes.includes(edge[1])) continue;
+
+                    edges.splice(i--, 1, ...this.graph.edges.filter(y => y[0] === edge[1]));
+                    changed = true;
+                }
+
+                if (!changed) break;
+            }
+
+            for (let edge of edges) {
+                let from = this.nodes.find(x => x.node === edge[0]);
+                let to = this.nodes.find(x => x.node === edge[1]);
+                if (!from || !to) continue;
+
+                if (from.out.includes(to)) continue;
+                this.addEdge(from, to);
+            }
         }
     }
 
@@ -390,5 +330,117 @@ export class GraphLayout {
                 break;
             }
         }
+    }
+}
+
+export class LayoutNode {
+    layer: number = 0;
+    x: number = 0;
+    a: number;
+    in: LayoutNode[] = [];
+    out: LayoutNode[] = [];
+    component: number = null;
+    neighbor: LayoutNode = null;
+
+    tweenedPosition = new Tweened<{ x: number, y: number}>(
+        null,
+        ANIMATION_DURATION,
+        lerpPoints,
+        EaseType.EaseOutElasticQuarter
+    );
+    visibility = new Tweened(
+        0,
+        ANIMATION_DURATION,
+        lerp,
+        EaseType.EaseOutQuint
+    );
+
+    constructor(public node?: GraphNode) {
+        this.visibility.target = 1;
+    }
+
+    get isDummy() {
+        return !this.node;
+    }
+
+    get height() {
+        return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
+    }
+
+    computePosition(center = false) {
+        let x = 350 * -this.layer;
+        let y = 100 * this.x;
+        let pos = { x, y };
+
+        if (center) {
+            pos.x += NODE_WIDTH/2;
+            pos.y += NODE_HEIGHT/2;
+        }
+
+        return pos;
+    }
+
+    visualPosition(time?: number) {
+        let actualPosition = this.computePosition();
+        if (!this.tweenedPosition.target || this.tweenedPosition.target.x !== actualPosition.x || this.tweenedPosition.target.y !== actualPosition.y) {
+            this.tweenedPosition.target = actualPosition;
+        }
+
+        let visibility = this.visibility.valueAt(time);
+        let pos = this.tweenedPosition.valueAt(time);
+
+        pos.y -= (1 - visibility) * 100;
+
+        return pos;
+    }
+
+    visualHeight(time?: number) {
+        return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.visibility.valueAt(time));
+    }
+
+    visualCenter(time?: number) {
+        let pos = this.visualPosition(time);
+        pos.x += NODE_WIDTH/2;
+        pos.y += this.visualHeight(time)/2;
+
+        return pos;
+    }
+
+    posOnBorder(angle: number, time?: number) {
+        let { x: centerX, y: centerY } = this.visualCenter(time);
+
+        let margin = 7;
+        let extendedWidth = NODE_WIDTH/2 + margin;
+        let extendedHeight = NODE_HEIGHT/2 + margin;
+
+        let x = Math.cos(angle) * extendedWidth;
+        let y = Math.sin(angle) * extendedHeight;
+
+        if (Math.abs(Math.tan(angle)) < 1) { // equiv to Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
+            let fac = extendedWidth / Math.abs(x);
+            x *= fac;
+            y *= fac;
+        } else {
+            let fac = extendedHeight / Math.abs(y);
+            x *= fac;
+            y *= fac;
+        }
+
+        return {
+            x: centerX + x,
+            y: centerY + y
+        };
+    }
+}
+
+export class LayoutEdge extends Array<LayoutNode> {
+    waypoints: LayoutNode[] = [this[0], this[1]];
+
+    constructor(from: LayoutNode, to: LayoutNode) {
+        super(from, to);
+    }
+
+    get span() {
+        return this[0].layer - this[1].layer;
     }
 }

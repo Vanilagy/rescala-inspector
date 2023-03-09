@@ -1,4 +1,5 @@
-import { get, writable } from "svelte/store";
+import { subscribe } from "svelte/internal";
+import { get, writable, type Writable } from "svelte/store";
 import type { Graph, GraphNode } from "./graph";
 import { GraphLayout, LayoutNode } from "./graph_layout";
 import { EaseType, Tweened } from "./tween";
@@ -24,6 +25,10 @@ export class RenderedGraph {
         graph.on('change', () => this.graphHasChanged = true);
         this.ctx = canvas.getContext('2d');
         this.layout = new GraphLayout(graph);
+
+        subscribe(this.layout.pathStructureRoot, () => {
+            this.graphHasChanged = true;
+        });
     }
     
     render() {
@@ -150,7 +155,6 @@ export class RenderedGraph {
 
     maybeReconcile() {
         if (!this.graphHasChanged) return;
-        this.graphHasChanged = false;
 
         this.layout.reconcile();
         this.layout.layOut();
@@ -191,6 +195,8 @@ export class RenderedGraph {
             edge.visibility.target = 0;
             edge.tweenedPath.target = edge.computePath(Infinity);
         }
+
+        this.graphHasChanged = false;
     }
 
     supplyMousePosition(position: Point) {

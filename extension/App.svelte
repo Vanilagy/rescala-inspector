@@ -2,15 +2,12 @@
     import { onMount } from "svelte";
     import type { Writable } from "svelte/store";
     import { fly } from "svelte/transition";
-    import { Graph, type GraphNode, type ReScalaEvent } from "./graph";
+    import { Graph, type GraphNode } from "./graph";
     import type { LayoutNode } from "./graph_layout";
     import { NODE_HEIGHT, RenderedGraph } from "./rendered_graph";
+    import type { ReScalaEvent } from "./re_scala";
     import { clamp } from "./utils";
-
-    /**
-     * TODO
-     * - live integration
-     */
+    import Structure from "./Structure.svelte";
 
     let canvas: HTMLCanvasElement;
 
@@ -247,9 +244,9 @@
     let graph = new Graph();
     //graph.processReScalaEvents(eventGroups[0]);
     
-    let n1: GraphNode = { id: 0, label: '', value: null };
-    let n2: GraphNode = { id: 1, label: '', value: null };
-    let n3: GraphNode = { id: 2, label: '', value: null };
+    //let n1: GraphNode = { id: 0, label: '', value: null };
+    //let n2: GraphNode = { id: 1, label: '', value: null };
+    //let n3: GraphNode = { id: 2, label: '', value: null };
     //graph.addNode(n1);
     //graph.addNode(n3);
     //graph.addEdge(n1, n3);
@@ -287,25 +284,38 @@
         };
         render();
 
+        let eventsProcessed = 0;
+        let lastId: number = null;
+
         if (typeof chrome !== 'undefined') {
-            const handle = (result: ReScalaEvent[], isException: any) => {
-                console.log(1);
+            const handle = (result: { events: ReScalaEvent[], id: number }, isException: any) => {
                 if (isException) {
                     console.log("exception", isException);
                     return;
                 }
 
-                graph.processReScalaEvents(result);
+                if (lastId && lastId !== result.id) {
+                    eventsProcessed = 0;
+                    graph = new Graph();
+                    renderedGraph = new RenderedGraph(graph, canvas);
+                    hoveredNode = renderedGraph.hoveredNode;
+                }
+                lastId = result.id;
+
+                graph.processReScalaEvents(result.events.slice(eventsProcessed));
+                eventsProcessed = result.events.length;
             };
 
-            const getEvents = () => {
+            const getData = () => {
                 let events = (window as any).reScalaEvents as ReScalaEvent[];
-                (window as any).reScalaEvents = [];
-                return events;
+
+                return {
+                    id: (window as any).reScalaId as number,
+                    events
+                };
             };
             setInterval(() => {
-                console.log("here");
-                chrome.devtools.inspectedWindow.eval(`(${getEvents.toString()})()`, handle);
+                chrome.devtools.inspectedWindow.eval(`(${getData.toString()})()`, handle);
             }, 1000/30);
         }
     });
@@ -333,7 +343,7 @@
         if (!$hoveredNode) return;
 
         let width = 208;
-        let height = 128;
+        let height = 150;
         let left = clamp($hoveredNode.visualCenter().x * renderedGraph.scale + renderedGraph.originX - width/2, 10, window.innerWidth - width - 10);
         let top = $hoveredNode.visualPosition().y * renderedGraph.scale + renderedGraph.originY - height;
         let paddingTop = 0;
@@ -398,8 +408,27 @@
         style:padding-bottom={popupStyle.paddingBottom + 'px'}
     >
         <div class="w-full h-full bg-zinc-700 shadow rounded-md p-2 px-3 space-y-3">
-            <p class="truncate"><span class="opacity-50 font-bold uppercase text-[11px]">Label</span><br>{$hoveredNode.node.label}</p>
-            <p class="truncate"><span class="opacity-50 font-bold uppercase text-[11px]">Value</span><br>{$hoveredNode.node.value}</p>
+            <p class="opacity-30 text-[10px] break-words">
+                {@html '/' + $hoveredNode.node.reScalaResource.path.slice(0, -1).join('/').replaceAll('/', '/<wbr>')}
+            </p>
+            <div class="flex w-full !mt-1">
+                <p class="truncate flex-1">
+                    <span class="opacity-50 font-bold uppercase text-[11px]">Label</span><br>
+                    {$hoveredNode.node.label}
+                </p>
+                <p class="truncate text-right">
+                    <span class="opacity-50 font-bold uppercase text-[11px]">ID</span><br>
+                    {$hoveredNode.node.id}
+                </p>
+            </div>
+            <p class="truncate">
+                <span class="opacity-50 font-bold uppercase text-[11px]">Value</span><br>
+                {$hoveredNode.node.value}
+            </p>
         </div>
     </div>
+{/if}
+
+{#if renderedGraph}
+    <Structure graphLayout={renderedGraph.layout} />
 {/if}

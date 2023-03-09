@@ -1,38 +1,14 @@
 import { Emitter } from "./emitter";
+import { extractPathFromReScalaResource, type ReScalaEvent, type ReScalaResource } from "./re_scala";
 import { remove } from "./utils";
 
 export interface GraphNode {
     id: number,
     label: string,
-    value: string
+    value: string,
+    reScalaResource: ReScalaResource
 }
 export type GraphEdge = [GraphNode, GraphNode];
-
-interface ReScalaResource {
-    idCounter: number,
-    description: string,
-    enclosing: string,
-    file: string,
-    line: number
-}
-
-export type ReScalaEvent = {
-    type: 'Create',
-    resource: ReScalaResource,
-    inputs?: ReScalaResource[]
-} | {
-    type: 'Discover',
-    source: ReScalaResource,
-    sink: ReScalaResource
-} | {
-    type: 'Value',
-    source: ReScalaResource,
-    value: string
-} | {
-    type: 'Drop',
-    source: ReScalaResource,
-    sink: ReScalaResource
-}
 
 export class Graph extends Emitter<{
     'change': void
@@ -61,10 +37,13 @@ export class Graph extends Emitter<{
 
     processReScalaEvent(event: ReScalaEvent) {
         if (event.type === 'Create') {
+            event.resource.path = extractPathFromReScalaResource(event.resource);
+
             let newNode: GraphNode = {
                 id: event.resource.idCounter,
                 label: event.resource.enclosing.split('#').at(-1).split(':')[0].split(' ').at(-1).split('.').at(-1),
-                value: null
+                value: null,
+                reScalaResource: event.resource
             };
             if (this.nodes.some(x => x.id === newNode.id)) throw new Error("Node already exists!");
             this.addNode(newNode);
