@@ -1,13 +1,15 @@
 import { subscribe } from "svelte/internal";
 import { get, writable, type Writable } from "svelte/store";
-import type { Graph, GraphNode } from "./graph";
+import type { HistoryEntry, Graph } from "./graph";
 import { GraphLayout, LayoutNode } from "./graph_layout";
 import { EaseType, Tweened } from "./tween";
-import { catmullRom, lerp, lerpPoints, quadraticBezier, quadraticBezierDerivative, remove, roundedRect, saturate, type Path, type Point } from "./utils";
+import { catmullRom, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, type Point } from "./utils";
 
 export const NODE_WIDTH = 150;
 export const NODE_HEIGHT = 70;
 export const ANIMATION_DURATION = 1000;
+
+export type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
 
 export class RenderedGraph {
     ctx: CanvasRenderingContext2D;
@@ -20,21 +22,26 @@ export class RenderedGraph {
     graphHasChanged = true;
     hoveredNode = writable<LayoutNode>(null);
     mousePosition: Point = { x: 0, y: 0 };
+    pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
+    viewedHistoryEntry: Writable<HistoryEntry>;
 
     constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
         graph.on('change', () => this.graphHasChanged = true);
-        this.ctx = canvas.getContext('2d');
-        this.layout = new GraphLayout(graph);
 
-        subscribe(this.layout.pathStructureRoot, () => {
-            this.graphHasChanged = true;
+        this.ctx = canvas.getContext('2d');
+        this.layout = new GraphLayout(this);
+        this.viewedHistoryEntry = writable(get(graph.history).at(-1))
+
+        subscribe(this.pathStructureRoot, () => {
+            if (this.graphHasChanged) return; // Because we'll reconcile anyway
+            this.reconcile();
         });
     }
     
     render() {
         let { ctx } = this;
 
-        this.maybeReconcile();
+        this.onGraphChange();
 
         ctx.resetTransform();
 
@@ -58,6 +65,31 @@ export class RenderedGraph {
         }
 
         this.checkHover();
+    }
+
+    onGraphChange() {
+        if (!this.graphHasChanged) return;
+
+        let paths = this.graph.nodes.map(x => x.reScalaResource.path);
+        for (let path of paths) {
+            let node = get(this.pathStructureRoot);
+            for (let section of path.slice(0, -1)) {
+                if (!node.children.some(x => x.label === section)) {
+                    node.children.push({ label: section, shown: true, children: [] });
+                }
+                node = node.children.find(x => x.label === section);
+            }
+        }
+        this.pathStructureRoot.update(x => x);
+
+        if (get(this.viewedHistoryEntry) === get(this.graph.history).at(-2)) {
+            console.log("what");
+            this.viewHistoryEntry(get(this.graph.history).at(-1));
+        } else {
+            this.reconcile();
+        }
+
+        this.graphHasChanged = false;
     }
 
     drawNode(node: LayoutNode) {
@@ -153,9 +185,7 @@ export class RenderedGraph {
         ctx.restore();
     }
 
-    maybeReconcile() {
-        if (!this.graphHasChanged) return;
-
+    reconcile() {
         this.layout.reconcile();
         this.layout.layOut();
 
@@ -195,8 +225,11 @@ export class RenderedGraph {
             edge.visibility.target = 0;
             edge.tweenedPath.target = edge.computePath(Infinity);
         }
+    }
 
-        this.graphHasChanged = false;
+    viewHistoryEntry(entry: HistoryEntry) {
+        this.viewedHistoryEntry.set(entry);
+        this.reconcile();
     }
 
     supplyMousePosition(position: Point) {

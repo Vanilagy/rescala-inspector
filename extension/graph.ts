@@ -1,3 +1,4 @@
+import { writable } from "svelte/store";
 import { Emitter } from "./emitter";
 import { extractPathFromReScalaResource, type ReScalaEvent, type ReScalaResource } from "./re_scala";
 import { remove } from "./utils";
@@ -10,11 +11,22 @@ export interface GraphNode {
 }
 export type GraphEdge = [GraphNode, GraphNode];
 
+export interface HistoryEntry {
+    nodes: GraphNode[],
+    edges: GraphEdge[],
+    events: ReScalaEvent[]
+}
+
 export class Graph extends Emitter<{
     'change': void
 }> {
     nodes: GraphNode[] = [];
     edges: GraphEdge[] = [];
+    history = writable<HistoryEntry[]>([{
+        nodes: [],
+        edges: [],
+        events: []
+    }]);
 
     addNode(node: GraphNode) {
         this.nodes.push(node);
@@ -32,7 +44,11 @@ export class Graph extends Emitter<{
     }
 
     processReScalaEvents(events: ReScalaEvent[]) {
+        if (events.length === 0) return;
+
         for (let event of events) this.processReScalaEvent(event);
+
+        this.history.update(x => [...x, { nodes: [...this.nodes], edges: [...this.edges], events }]);
     }
 
     processReScalaEvent(event: ReScalaEvent) {
@@ -71,7 +87,7 @@ export class Graph extends Emitter<{
             if (!n1 || !n2) throw new Error("Missing node(s)!");
 
             let edge = this.edges.find(x => x[0] === n1 && x[1] === n2);
-            if (!edge) throw new Error("Ain't no way");
+            if (!edge) throw new Error("Attempted to drop edge that didn't exist!");
             this.removeEdge(edge);
         }
     }

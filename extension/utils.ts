@@ -47,3 +47,8 @@ export const lerpPoints = (p1: Point, p2: Point, t: number): Point => {
 export const saturate = (x: number) => Math.min(Math.max(x, 0), 1);
 
 export const clamp = (x: number, min: number, max: number) => x < min ? min : (x > max ? max : x);
+
+/** Picks singular or plural based on the passed value. */
+export const pickNumber = (value: number, singular: string, plural = singular + 's') => {
+    return Math.abs(value) === 1 ? singular : plural;
+};

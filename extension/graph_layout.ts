@@ -1,19 +1,16 @@
 import { get, writable } from "svelte/store";
 import type { Graph, GraphNode } from "./graph";
-import { NODE_WIDTH, NODE_HEIGHT, ANIMATION_DURATION } from "./rendered_graph";
+import { NODE_WIDTH, NODE_HEIGHT, ANIMATION_DURATION, RenderedGraph, type PathStructureNode } from "./rendered_graph";
 import { EaseType, Tweened } from "./tween";
 import { lerp, lerpPoints, remove } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
-type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
-
 export class GraphLayout {
     nodes: LayoutNode[] = [];
     edges: LayoutEdge[] = [];
-    pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
 
-    constructor(public graph: Graph) {}
+    constructor(public renderedGraph: RenderedGraph) {}
 
     addNode(layoutNode: LayoutNode) {
         this.nodes.push(layoutNode);
@@ -37,6 +34,8 @@ export class GraphLayout {
     }
 
     layOut() {
+        if (this.nodes.length === 0) return;
+
         this.assignLayers();
         this.createDummyNodes();
         this.assignComponents();
@@ -52,20 +51,10 @@ export class GraphLayout {
     }
 
     reconcile() {
-        let paths = this.graph.nodes.map(x => x.reScalaResource.path);
-        for (let path of paths) {
-            let node = get(this.pathStructureRoot);
-            for (let section of path.slice(0, -1)) {
-                if (!node.children.some(x => x.label === section)) {
-                    node.children.push({ label: section, shown: true, children: [] });
-                }
-                node = node.children.find(x => x.label === section);
-            }
-        }
-        this.pathStructureRoot.update(x => x);
+        let { nodes, edges } = get(this.renderedGraph.viewedHistoryEntry)
 
-        let shownNodes = this.graph.nodes.filter(x => 
-            this.pathIsShown(get(this.pathStructureRoot), x.reScalaResource.path.slice(0, -1))
+        let shownNodes = nodes.filter(x => 
+            this.pathIsShown(get(this.renderedGraph.pathStructureRoot), x.reScalaResource.path.slice(0, -1))
         );
         for (let node of shownNodes) {
             if (this.nodes.some(x => x.node === node)) continue;
@@ -80,22 +69,22 @@ export class GraphLayout {
         for (let edge of [...this.edges]) this.removeEdge(edge);
 
         for (let node of shownNodes) {
-            let edges = this.graph.edges.filter(x => x[0] === node);
+            let outgoingEdges = edges.filter(x => x[0] === node);
             while (true) {
                 let changed = false;
 
-                for (let i = 0; i < edges.length; i++) {
-                    let edge = edges[i];
+                for (let i = 0; i < outgoingEdges.length; i++) {
+                    let edge = outgoingEdges[i];
                     if (shownNodes.includes(edge[1])) continue;
 
-                    edges.splice(i--, 1, ...this.graph.edges.filter(y => y[0] === edge[1]));
+                    outgoingEdges.splice(i--, 1, ...edges.filter(y => y[0] === edge[1]));
                     changed = true;
                 }
 
                 if (!changed) break;
             }
 
-            for (let edge of edges) {
+            for (let edge of outgoingEdges) {
                 let from = this.nodes.find(x => x.node === edge[0]);
                 let to = this.nodes.find(x => x.node === edge[1]);
                 if (!from || !to) continue;

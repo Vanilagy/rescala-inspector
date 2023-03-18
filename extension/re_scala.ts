@@ -16,14 +16,14 @@ export type ReScalaEvent = {
     source: ReScalaResource,
     sink: ReScalaResource
 } | {
-    type: 'Value',
-    source: ReScalaResource,
-    value: string
-} | {
     type: 'Drop',
     source: ReScalaResource,
     sink: ReScalaResource
-}
+} | {
+    type: 'Value',
+    source: ReScalaResource,
+    value: string
+};
 
 export const extractPathFromReScalaResource = (resource: ReScalaResource) => {
     let path: string[] = [];
