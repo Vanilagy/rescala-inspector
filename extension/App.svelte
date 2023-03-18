@@ -9,6 +9,12 @@
     import { clamp } from "./utils";
     import Structure from "./Structure.svelte";
 
+    /** 
+     * TODOS
+     * Feature: History + transactions
+     * Values: How to display?
+     */
+
     let canvas: HTMLCanvasElement;
 
     let innerWidth = window.innerWidth;
@@ -293,6 +299,8 @@
                     console.log("exception", isException);
                     return;
                 }
+
+                if (!result.events) return;
 
                 if (lastId && lastId !== result.id) {
                     eventsProcessed = 0;

@@ -6,7 +6,7 @@
     let structureShown = false;
 
     export let graphLayout: GraphLayout;
-    let root = graphLayout.pathStructureRoot;
+    $: root = graphLayout.pathStructureRoot;
 
     const showAll = () => {
         root.update(x => {
