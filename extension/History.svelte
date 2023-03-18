@@ -8,7 +8,7 @@
     $: history = renderedGraph.graph.history;
     $: viewedEntry = renderedGraph.viewedHistoryEntry;
 
-    let historyShown = true;
+    let historyShown = false;
 
     const historyEntryDifference = (e1: HistoryEntry, e2: HistoryEntry) => {
         let output = '';
@@ -54,7 +54,7 @@
     </button>
 
     {#if historyShown}
-        <div class="w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto">
+        <div class="w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md">
             <div class="p-3 flex items-center h-6 box-content">
                 {#each $history as entry, i}
                     <button

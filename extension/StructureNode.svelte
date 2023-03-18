@@ -1,8 +1,8 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
+    import type { PathStructureNode } from './rendered_graph';
 
-    type StructureNode = { label: string, shown: boolean, children: StructureNode[] };
-    export let node: StructureNode;
+    export let node: PathStructureNode;
 
     let expanded = false;
 </script>
