@@ -1,1 +1,2 @@
-- Values: How to display?
+- Clean up & document code
+- Connecting DOM elements with REScala values
