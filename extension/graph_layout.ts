@@ -217,8 +217,10 @@ export class GraphLayout {
     decross() {
         let last: LayoutNode[] = null;
 
-        let j: number;
-        for (j = 0; j < 100; j++) {
+        this.computeNeighbors();
+        this.spreadOut();
+
+        for (let j = 0; j < 10; j++) {
             this.solve(true, 50);
             let sortedNodes = this.computeNeighbors();
             this.spreadOut();
@@ -305,17 +307,32 @@ export class GraphLayout {
     }
 
     solve(noCollision = false, iters?: number) {
-        let h = 0.25;
+        let lastAccel: number;
+        let startingH = 0.3;
+        let h = startingH;
 
         for (let i = 0; i < (iters ?? 500); i++) {
-            let x = this.nodes.map(n => n.x);
             this.computeForces(noCollision);
-            this.nodes.forEach(n => n.x += h * n.a);
 
-            if (iters !== undefined) continue;
+            this.nodes.forEach((n, i) => n.x += h * n.a);
 
-            let highestDx = Math.max(...this.nodes.map((n, i) => Math.abs(x[i] - n.x)));
-            if (highestDx < 0.001) {
+            let maxAccel = Math.max(...this.nodes.map(n => Math.abs(n.a)));
+            if (lastAccel) {
+                if (maxAccel < lastAccel * 1.1) {
+                    if (h < startingH) {
+                        h *= 1.25;
+                    } else {
+                        h *= 1.01;
+                    }
+                } else {
+                    h *= 0.5;
+                }
+            }
+            lastAccel = maxAccel;
+
+            
+
+            if (iters === undefined && maxAccel < 0.01) {
                 break;
             }
         }

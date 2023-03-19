@@ -36,6 +36,16 @@
         let index = arr.indexOf($viewedEntry);
         renderedGraph.viewHistoryEntry(arr[Math.min(index + 1, arr.length - 1)]);
     };
+
+    const scrollIntoView = (node: HTMLElement, entry: HistoryEntry) => {
+        let unsubscribe = viewedEntry.subscribe(x => {
+            if (x === entry) node.scrollIntoView({ inline: 'nearest' });
+        });
+
+        return {
+            destroy: unsubscribe
+        };
+    };
 </script>
 
 <svelte:window
@@ -54,12 +64,13 @@
     </button>
 
     {#if historyShown}
-        <div class="w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md">
-            <div class="p-3 flex items-center h-6 box-content">
+        <div class="w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3">
+            <div class="flex items-center h-6 box-content">
                 {#each $history as entry, i}
                     <button
                         class="shrink-0 bg-zinc-700 w-4 h-4 rounded-full shadow z-10 hover:h-6 transition-all {$viewedEntry === entry && 'bg-blue-500 h-6'}"
                         on:click={() => renderedGraph.viewHistoryEntry(entry)}
+                        use:scrollIntoView={entry}
                     />
 
                     {#if i < $history.length - 1}

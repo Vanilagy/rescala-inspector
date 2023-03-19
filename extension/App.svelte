@@ -137,6 +137,7 @@
     on:mouseup={() => mouseHeld = false}
 
     on:keydown={e => e.code === 'KeyI' && renderedGraph.layout.solve(e.shiftKey, 1)}
+    on:keydown={e => e.code === 'KeyS' && renderedGraph.layout.solve(e.shiftKey)}
     on:keydown={e => e.code === 'KeyO'}
     on:keydown={e => e.code === 'KeyP' && renderedGraph.layout.spreadOut()}
     on:keydown={e => e.code === 'KeyD' && renderedGraph.layout.decross()}
