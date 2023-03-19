@@ -29,6 +29,12 @@ export class RenderedGraph {
     pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
     viewedHistoryEntry: Writable<HistoryEntry>;
 
+    elevation1Color: string;
+    hover1Color: string;
+    hoverStrongColor: string;
+    border1Color: string;
+    textColor: string;
+
     constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
         graph.on('change', () => this.graphHasChanged = true);
 
@@ -44,6 +50,13 @@ export class RenderedGraph {
     
     render() {
         let { ctx } = this;
+
+        let computedStyle = getComputedStyle(document.body);
+        this.elevation1Color = `rgb(${computedStyle.getPropertyValue('--elevation-1')})`;
+        this.hover1Color = `rgb(${computedStyle.getPropertyValue('--hover-1')})`;
+        this.hoverStrongColor = `rgb(${computedStyle.getPropertyValue('--hover-strong')})`;
+        this.border1Color = `rgb(${computedStyle.getPropertyValue('--border-1')})`;
+        this.textColor = computedStyle.getPropertyValue('color');
 
         this.onGraphChange();
 
@@ -111,17 +124,17 @@ export class RenderedGraph {
 
             let highlighted = get(this.hoveredNode) === node || get(this.selectedNode) === node;
 
-            ctx.strokeStyle = highlighted ? 'white' : '#474a52';
+            ctx.strokeStyle = highlighted ? this.hoverStrongColor : this.border1Color;
             ctx.lineWidth = 4;
             ctx.stroke();
 
-            ctx.fillStyle = '#292a2d';
+            ctx.fillStyle = this.elevation1Color;
             ctx.fill();
 
             ctx.textAlign = 'center';
             ctx.font = '14px Inter';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = this.textColor;
             ctx.fillText(node.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
 
             if (value) {

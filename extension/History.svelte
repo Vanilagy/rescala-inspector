@@ -55,27 +55,27 @@
 
 <div class="absolute left-2 right-2 bottom-2 drop-shadow pointer-events-none">
     <button
-        class="pointer-events-auto w-56 bg-[#292a2d] rounded-t-md text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-zinc-800 border box-content border-zinc-700"
+        class="group pointer-events-auto w-56 bg-elevation-1 rounded-t-md text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-hover-1 border box-content border-border-1"
         class:rounded-b-md={!historyShown}
         class:!border-b-0={historyShown}
         on:click={() => historyShown = !historyShown}
     >
-        <p class="flex-1 opacity-60 hover:opacity-100">History</p>
+        <p class="flex-1 opacity-60 group-hover:opacity-100">History</p>
         <Icon icon="heroicons:chevron-down-20-solid" class="w-4 h-4 {!historyShown && 'rotate-180'}" />
     </button>
 
     {#if historyShown}
-        <div class="pointer-events-auto w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3 border border-zinc-700">
+        <div class="pointer-events-auto w-full bg-elevation-1 rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3 border border-border-1">
             <div class="flex items-center h-6 box-content">
                 {#each $history as entry, i}
                     <button
-                        class="shrink-0 bg-zinc-700 w-4 h-4 rounded-full shadow z-10 hover:h-6 transition-all {$viewedEntry === entry && 'bg-blue-500 h-6'}"
+                        class="shrink-0 bg-elevation-2 w-4 h-4 rounded-full shadow z-10 hover:h-6 transition-all {$viewedEntry === entry && 'bg-highlight-1 h-6'}"
                         on:click={() => renderedGraph.viewHistoryEntry(entry)}
                         use:scrollIntoView={entry}
                     />
 
                     {#if i < $history.length - 1}
-                        <div class="shrink-0 bg-zinc-700 w-24 h-1 rounded-full -mx-1 relative">
+                        <div class="shrink-0 bg-elevation-2 w-24 h-1 rounded-full -mx-1 relative">
                             <p class="absolute left-0 top-2 text-[10px] opacity-50 w-full text-center whitespace-pre">
                                 {historyEntryDifference(entry, $history[i+1])}
                             </p>

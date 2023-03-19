@@ -27,10 +27,10 @@
     <button class="w-4 h-4 opacity-30 hover:opacity-100" on:click={() => renderedGraph.center()} title="Center">
         <Icon icon="material-symbols:center-focus-strong-outline-rounded" class="w-full h-full" />
     </button>
-    <div class="w-2 bg-[#292a2d] rounded-md overflow-hidden h-32 relative border box-content border-zinc-700">
+    <div class="w-2 bg-elevation-1 rounded-md overflow-hidden h-32 relative border box-content border-border-1">
         <div
-            class="w-2 h-4 rounded-md bg-zinc-600 absolute left-0 shadow hover:bg-white cursor-grab"
-            class:bg-white={dragging}
+            class="w-2 h-4 rounded-md bg-elevation-3 absolute left-0 shadow hover:bg-hover-strong cursor-grab"
+            class:bg-hover-strong={dragging}
             style="bottom: {100 * completion}%; transform: translateY({100 * completion}%);"
             on:pointerdown={() => dragging = true}
         />

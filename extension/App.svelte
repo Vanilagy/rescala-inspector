@@ -175,7 +175,7 @@
 {#if $selectedNode}
     <div
         transition:fly={{y: -10, duration: 150}}
-        class="absolute text-xs opacity-20 hover:opacity-100 transition-opacity blur-sm hover:blur-none"
+        class="absolute text-xs opacity-30 hover:opacity-100 transition-opacity blur-sm hover:blur-none"
         style:width={popupStyle.width + 'px'}
         style:height={popupStyle.height + 'px'}
         style:left={popupStyle.left + 'px'}
@@ -183,7 +183,7 @@
         style:padding-top={popupStyle.paddingTop + 'px'}
         style:padding-bottom={popupStyle.paddingBottom + 'px'}
     >
-        <div class="w-full h-full bg-zinc-700 shadow rounded-md p-2 px-3 space-y-3">
+        <div class="w-full h-full bg-elevation-1 border border-border-1 shadow rounded-md p-2 px-3 space-y-3">
             <p class="opacity-30 text-[10px] break-words">
                 {@html '/' + $selectedNode.node.reScalaResource.path.slice(0, -1).join('/').replaceAll('/', '/<wbr>')}
             </p>

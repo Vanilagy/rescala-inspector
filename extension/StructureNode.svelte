@@ -19,8 +19,8 @@
             on:click={() => node.shown = !node.shown}
         >
             <div
-                class="h-full w-full rounded-full bg-zinc-700"
-                class:bg-blue-500={node.shown}
+                class="h-full w-full rounded-full bg-elevation-2"
+                class:bg-highlight-1={node.shown}
             />
         </button>
     </div>
