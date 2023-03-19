@@ -8,6 +8,8 @@ import { catmullRom, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, 
 export const NODE_WIDTH = 150;
 export const NODE_HEIGHT = 70;
 export const ANIMATION_DURATION = 1000;
+export const MIN_SCALE = 2**-7;
+export const MAX_SCALE = 2**2;
 
 export type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
 
@@ -15,7 +17,7 @@ export class RenderedGraph {
     ctx: CanvasRenderingContext2D;
     originX = window.innerWidth/2;
     originY = 200;
-    scale = 0.5;
+    scale = writable(0.5);
     showNodeBoundingBoxes = false;
     layout: GraphLayout;
     renderedEdges: RenderedEdge[] = [];
@@ -49,7 +51,7 @@ export class RenderedGraph {
         
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         ctx.translate(this.originX, this.originY);
-        ctx.scale(this.scale, this.scale);
+        ctx.scale(get(this.scale), get(this.scale));
 
         for (let i = 0; i < this.renderedEdges.length; i++) {
             let edge = this.renderedEdges[i];
@@ -238,8 +240,8 @@ export class RenderedGraph {
 
     checkHover() {
         let newNode: LayoutNode = null;
-        let mouseX = (this.mousePosition.x - this.originX) / this.scale;
-        let mouseY = (this.mousePosition.y - this.originY) / this.scale;
+        let mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
+        let mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
 
         for (let node of this.layout.nodes) {
             if (node.isDummy) continue;

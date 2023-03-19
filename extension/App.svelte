@@ -1,14 +1,15 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import type { Writable } from "svelte/store";
+    import { get, type Writable } from "svelte/store";
     import { fly } from "svelte/transition";
     import { Graph, type HistoryEntry } from "./graph";
     import type { LayoutNode } from "./graph_layout";
-    import { NODE_HEIGHT, RenderedGraph } from "./rendered_graph";
+    import { MAX_SCALE, MIN_SCALE, NODE_HEIGHT, RenderedGraph } from "./rendered_graph";
     import type { ReScalaEvent } from "./re_scala";
     import { clamp } from "./utils";
     import Structure from "./Structure.svelte";
     import History from "./History.svelte";
+    import ZoomIndicator from "./ZoomIndicator.svelte";
 
     /** 
      * TODOS
@@ -93,11 +94,18 @@
         e.preventDefault();
         if (!renderedGraph) return;
 
+        let currentScale = get(renderedGraph.scale);
+
         let scaleChange = Math.pow(1.002, -e.deltaY);
+        if (currentScale * scaleChange <= MIN_SCALE) {
+            scaleChange = MIN_SCALE / currentScale;
+        } else if (currentScale * scaleChange >= MAX_SCALE) {
+            scaleChange = MAX_SCALE / currentScale;
+        }
 
         renderedGraph.originX = (renderedGraph.originX - e.clientX) * scaleChange + e.clientX;
         renderedGraph.originY = (renderedGraph.originY - e.clientY) * scaleChange + e.clientY;
-        renderedGraph.scale *= scaleChange;
+        renderedGraph.scale.update(x => x * scaleChange);
     };
 
     $: popupStyle = (() => {
@@ -105,13 +113,13 @@
 
         let width = 208;
         let height = 150;
-        let left = clamp($hoveredNode.visualCenter().x * renderedGraph.scale + renderedGraph.originX - width/2, 10, window.innerWidth - width - 10);
-        let top = $hoveredNode.visualPosition().y * renderedGraph.scale + renderedGraph.originY - height;
+        let left = clamp($hoveredNode.visualCenter().x * get(renderedGraph.scale) + renderedGraph.originX - width/2, 10, window.innerWidth - width - 10);
+        let top = $hoveredNode.visualPosition().y * get(renderedGraph.scale) + renderedGraph.originY - height;
         let paddingTop = 0;
         let paddingBottom = 10;
 
         if (top < 10) {
-            top += height + NODE_HEIGHT * renderedGraph.scale;
+            top += height + NODE_HEIGHT * get(renderedGraph.scale);
             [paddingTop, paddingBottom] = [paddingBottom, paddingTop];
         }
 
@@ -193,4 +201,5 @@
 {#if renderedGraph}
     <Structure {renderedGraph} />
     <History {renderedGraph} />
+    <ZoomIndicator {renderedGraph} />
 {/if}

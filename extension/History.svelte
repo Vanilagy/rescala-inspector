@@ -53,9 +53,9 @@
     on:keydown={(e) => e.code === 'ArrowRight' && goForward()}
 />
 
-<div class="absolute left-2 right-2 bottom-2 drop-shadow">
+<div class="absolute left-2 right-2 bottom-2 drop-shadow pointer-events-none">
     <button
-        class="w-56 bg-[#292a2d] rounded-t-md text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-zinc-800"
+        class="pointer-events-auto w-56 bg-[#292a2d] rounded-t-md text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-zinc-800"
         class:rounded-b-md={!historyShown}
         on:click={() => historyShown = !historyShown}
     >
@@ -64,7 +64,7 @@
     </button>
 
     {#if historyShown}
-        <div class="w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3">
+        <div class="pointer-events-auto w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3">
             <div class="flex items-center h-6 box-content">
                 {#each $history as entry, i}
                     <button
