@@ -100,7 +100,7 @@ export class RenderedGraph {
             this.ctx.globalAlpha = node.visibility.value;
 
             let label = node.node.label;
-            let value = node.node.value;
+            let value = get(this.viewedHistoryEntry).values.get(node.node);
 
             roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
 
@@ -117,7 +117,7 @@ export class RenderedGraph {
             ctx.fillStyle = 'white';
             ctx.fillText(node.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
 
-            if (node.node.value !== null) {
+            if (value) {
                 ctx.font = '10px Inter';
                 ctx.fillText(value, x+NODE_WIDTH/2, y + node.visualHeight() - 10);
             }

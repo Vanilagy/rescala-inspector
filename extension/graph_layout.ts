@@ -330,8 +330,6 @@ export class GraphLayout {
             }
             lastAccel = maxAccel;
 
-            
-
             if (iters === undefined && maxAccel < 0.01) {
                 break;
             }

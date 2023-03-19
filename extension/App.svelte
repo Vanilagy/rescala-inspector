@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import type { Writable } from "svelte/store";
     import { fly } from "svelte/transition";
-    import { Graph } from "./graph";
+    import { Graph, type HistoryEntry } from "./graph";
     import type { LayoutNode } from "./graph_layout";
     import { NODE_HEIGHT, RenderedGraph } from "./rendered_graph";
     import type { ReScalaEvent } from "./re_scala";
@@ -26,6 +26,7 @@
     let graph: Graph;
     let renderedGraph: RenderedGraph;
     let hoveredNode: Writable<LayoutNode>;
+    let viewedHistoryEntry: Writable<HistoryEntry>;
 
     onMount(() => {
         graph = new Graph();
@@ -55,6 +56,7 @@
                     graph = new Graph();
                     renderedGraph = new RenderedGraph(graph, canvas);
                     hoveredNode = renderedGraph.hoveredNode;
+                    viewedHistoryEntry = renderedGraph.viewedHistoryEntry;
                 }
                 lastId = result.id;
 
@@ -182,7 +184,7 @@
             </div>
             <p class="truncate">
                 <span class="opacity-50 font-bold uppercase text-[11px]">Value</span><br>
-                {$hoveredNode.node.value}
+                {$viewedHistoryEntry.values.get($hoveredNode.node)}
             </p>
         </div>
     </div>

@@ -6,7 +6,6 @@ import { remove } from "./utils";
 export interface GraphNode {
     id: number,
     label: string,
-    value: string,
     reScalaResource: ReScalaResource
 }
 export type GraphEdge = [GraphNode, GraphNode];
@@ -14,6 +13,7 @@ export type GraphEdge = [GraphNode, GraphNode];
 export interface HistoryEntry {
     nodes: GraphNode[],
     edges: GraphEdge[],
+    values: Map<GraphNode, string>,
     events: ReScalaEvent[]
 }
 
@@ -22,9 +22,11 @@ export class Graph extends Emitter<{
 }> {
     nodes: GraphNode[] = [];
     edges: GraphEdge[] = [];
+    values = new Map<GraphNode, string>();
     history = writable<HistoryEntry[]>([{
         nodes: [],
         edges: [],
+        values: new Map(),
         events: []
     }]);
 
@@ -48,7 +50,12 @@ export class Graph extends Emitter<{
 
         for (let event of events) this.processReScalaEvent(event);
 
-        this.history.update(x => [...x, { nodes: [...this.nodes], edges: [...this.edges], events }]);
+        this.history.update(x => [...x, {
+            nodes: [...this.nodes],
+            edges: [...this.edges],
+            values: new Map(this.values.entries()),
+            events
+        }]);
     }
 
     processReScalaEvent(event: ReScalaEvent) {
@@ -58,7 +65,6 @@ export class Graph extends Emitter<{
             let newNode: GraphNode = {
                 id: event.resource.idCounter,
                 label: event.resource.enclosing.split('#').at(-1).split(':')[0].split(' ').at(-1).split('.').at(-1),
-                value: null,
                 reScalaResource: event.resource
             };
             if (this.nodes.some(x => x.id === newNode.id)) throw new Error("Node already exists!");
@@ -80,7 +86,9 @@ export class Graph extends Emitter<{
             this.addEdge(n1, n2);
         } else if (event.type === 'Value') {
             let n = this.nodes.find(x => x.id === event.source.idCounter);
-            n.value = event.value;
+            this.values.set(n, event.value);
+
+            this.emit('change');
         } else if (event.type === 'Drop') {
             let n1 = this.nodes.find(x => x.id === event.source.idCounter);
             let n2 = this.nodes.find(x => x.id === event.sink.idCounter);

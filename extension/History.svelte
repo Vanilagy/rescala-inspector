@@ -81,6 +81,7 @@
                         </div>
                     {/if}
                 {/each}
+                <div class="w-3 h-1 shrink-0" />
             </div>
         </div>
     {/if}
