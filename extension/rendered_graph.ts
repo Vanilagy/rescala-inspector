@@ -94,34 +94,6 @@ export class RenderedGraph {
         this.checkHover();
     }
 
-    onGraphChange() {
-        if (!this.graphHasChanged) return;
-
-        let paths = this.graph.nodes.map(x => x.reScalaResource.path);
-        for (let path of paths) {
-            let node = get(this.pathStructureRoot);
-            for (let section of path.slice(0, -1)) {
-                if (!node.children.some(x => x.label === section)) {
-                    node.children.push({ label: section, shown: true, children: [] });
-                }
-                node = node.children.find(x => x.label === section);
-            }
-        }
-        this.pathStructureRoot.update(x => x);
-
-        let history = get(this.graph.history);
-
-        if (get(this.viewedHistoryEntry) === history.at(-2)) {
-            // If we used to be at the end, stick to the end
-            this.viewHistoryEntry(history.at(-1));
-            if (history.length === 2) this.center();
-        } else {
-            this.reconcile();
-        }
-
-        this.graphHasChanged = false;
-    }
-
     drawNode(node: LayoutNode) {
         let { ctx } = this;
         let { x, y } = node.visualPosition();
@@ -231,6 +203,34 @@ export class RenderedGraph {
         ctx.stroke();
 
         ctx.restore();
+    }
+
+    onGraphChange() {
+        if (!this.graphHasChanged) return;
+
+        let paths = this.graph.nodes.map(x => x.reScalaResource.path);
+        for (let path of paths) {
+            let node = get(this.pathStructureRoot);
+            for (let section of path.slice(0, -1)) {
+                if (!node.children.some(x => x.label === section)) {
+                    node.children.push({ label: section, shown: true, children: [] });
+                }
+                node = node.children.find(x => x.label === section);
+            }
+        }
+        this.pathStructureRoot.update(x => x);
+
+        let history = get(this.graph.history);
+
+        if (get(this.viewedHistoryEntry) === history.at(-2)) {
+            // If we used to be at the end, stick to the end
+            this.viewHistoryEntry(history.at(-1));
+            if (history.length === 2) this.center();
+        } else {
+            this.reconcile();
+        }
+
+        this.graphHasChanged = false;
     }
 
     reconcile() {
