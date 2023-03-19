@@ -3,7 +3,7 @@ import { get, writable, type Writable } from "svelte/store";
 import type { HistoryEntry, Graph } from "./graph";
 import { GraphLayout, LayoutNode } from "./graph_layout";
 import { EaseType, Tweened } from "./tween";
-import { catmullRom, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, type Point } from "./utils";
+import { catmullRom, clamp, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, type Point } from "./utils";
 
 export const NODE_WIDTH = 150;
 export const NODE_HEIGHT = 70;
@@ -262,6 +262,37 @@ export class RenderedGraph {
         }
 
         this.hoveredNode.set(newNode);
+    }
+
+    center() {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+
+        for (let node of this.layout.nodes) {
+            let pos = node.computePosition();
+
+            minX = Math.min(minX, pos.x);
+            minY = Math.min(minY, pos.y);
+            maxX = Math.max(maxX, pos.x + NODE_WIDTH);
+            maxY = Math.max(maxY, pos.y + NODE_HEIGHT);
+        }
+
+        if (minX > maxX) return; // Empty AABB
+
+        let centerX = (minX + maxX) / 2;
+        let centerY = (minY + maxY) / 2;
+        let width = 1.2 * (maxX - minX); // With added margin
+        let height = 1.2 * (maxY - minY);
+
+        this.scale.update(x => clamp(
+            Math.min(window.innerWidth / width, window.innerHeight / height),
+            MIN_SCALE,
+            MAX_SCALE
+        ));
+        this.originX = window.innerWidth/2 - centerX * get(this.scale);
+        this.originY = window.innerHeight/2 - centerY * get(this.scale);
     }
 }
 

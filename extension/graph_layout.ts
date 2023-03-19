@@ -2,7 +2,7 @@ import { get, writable } from "svelte/store";
 import type { Graph, GraphNode } from "./graph";
 import { NODE_WIDTH, NODE_HEIGHT, ANIMATION_DURATION, RenderedGraph, type PathStructureNode } from "./rendered_graph";
 import { EaseType, Tweened } from "./tween";
-import { lerp, lerpPoints, remove } from "./utils";
+import { lerp, lerpPoints, remove, type Point } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
@@ -346,7 +346,7 @@ export class LayoutNode {
     component: number = null;
     neighbor: LayoutNode = null;
 
-    tweenedPosition = new Tweened<{ x: number, y: number}>(
+    tweenedPosition = new Tweened<Point>(
         null,
         ANIMATION_DURATION,
         lerpPoints,
@@ -371,7 +371,7 @@ export class LayoutNode {
         return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
     }
 
-    computePosition(center = false) {
+    computePosition(center = false): Point {
         let x = 350 * -this.layer;
         let y = 100 * this.x;
         let pos = { x, y };
