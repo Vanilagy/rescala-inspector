@@ -20,7 +20,7 @@
     };
 </script>
 
-<div class="absolute top-2 left-2 w-56 bg-[#292a2d] rounded-md shadow overflow-hidden">
+<div class="absolute top-2 left-2 w-56 bg-[#292a2d] rounded-md shadow overflow-hidden border box-content border-zinc-700">
     <button
         class="w-full text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-zinc-800"
         on:click={() => structureShown = !structureShown}

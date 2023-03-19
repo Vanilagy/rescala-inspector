@@ -55,8 +55,9 @@
 
 <div class="absolute left-2 right-2 bottom-2 drop-shadow pointer-events-none">
     <button
-        class="pointer-events-auto w-56 bg-[#292a2d] rounded-t-md text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-zinc-800"
+        class="pointer-events-auto w-56 bg-[#292a2d] rounded-t-md text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-zinc-800 border box-content border-zinc-700"
         class:rounded-b-md={!historyShown}
+        class:!border-b-0={historyShown}
         on:click={() => historyShown = !historyShown}
     >
         <p class="flex-1 opacity-60 hover:opacity-100">History</p>
@@ -64,7 +65,7 @@
     </button>
 
     {#if historyShown}
-        <div class="pointer-events-auto w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3">
+        <div class="pointer-events-auto w-full bg-[#292a2d] rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3 border border-zinc-700">
             <div class="flex items-center h-6 box-content">
                 {#each $history as entry, i}
                     <button
