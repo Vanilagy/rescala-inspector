@@ -4,7 +4,7 @@
 
 @layer base {
     :root {
-        --elevation0: 255 255 255;
+        --elevation-0: 255 255 255;
         --elevation-1: 241 243 244;
         --elevation-2: 203 205 209;
         --elevation-3: 156 163 175;
@@ -12,10 +12,15 @@
         --hover-1: 229 231 235;
         --hover-strong: 0 0 0;
         --border-1: 203 205 209;
+        --boolean: 249 115 22;
+        --number: 14 165 233;
+        --string: 16 185 129;
+        --instance: 132 204 22;
+        --list: 234 179 8;
     }
 
     body {
-        font-family: Inter;
+        font-family: sans-serif;
         overflow: hidden;
         user-select: none;
     }

@@ -34,6 +34,11 @@ export class RenderedGraph {
     hoverStrongColor: string;
     border1Color: string;
     textColor: string;
+    booleanColor: string;
+    numberColor: string;
+    stringColor: string;
+    instanceColor: string;
+    listColor: string;
 
     constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
         graph.on('change', () => this.graphHasChanged = true);
@@ -57,6 +62,11 @@ export class RenderedGraph {
         this.hoverStrongColor = `rgb(${computedStyle.getPropertyValue('--hover-strong')})`;
         this.border1Color = `rgb(${computedStyle.getPropertyValue('--border-1')})`;
         this.textColor = computedStyle.getPropertyValue('color');
+        this.booleanColor = `rgb(${computedStyle.getPropertyValue('--boolean')})`;
+        this.numberColor = `rgb(${computedStyle.getPropertyValue('--number')})`;
+        this.stringColor = `rgb(${computedStyle.getPropertyValue('--string')})`;
+        this.instanceColor = `rgb(${computedStyle.getPropertyValue('--instance')})`;
+        this.listColor = `rgb(${computedStyle.getPropertyValue('--list')})`;
 
         this.onGraphChange();
 
@@ -99,8 +109,12 @@ export class RenderedGraph {
         }
         this.pathStructureRoot.update(x => x);
 
-        if (get(this.viewedHistoryEntry) === get(this.graph.history).at(-2)) {
-            this.viewHistoryEntry(get(this.graph.history).at(-1));
+        let history = get(this.graph.history);
+
+        if (get(this.viewedHistoryEntry) === history.at(-2)) {
+            // If we used to be at the end, stick to the end
+            this.viewHistoryEntry(history.at(-1));
+            if (history.length === 2) this.center();
         } else {
             this.reconcile();
         }
@@ -132,14 +146,21 @@ export class RenderedGraph {
             ctx.fill();
 
             ctx.textAlign = 'center';
-            ctx.font = '14px Inter';
+            ctx.font = '14px sans-serif';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = this.textColor;
             ctx.fillText(node.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
 
             if (value) {
-                ctx.font = '10px Inter';
-                ctx.fillText(value, x+NODE_WIDTH/2, y + node.visualHeight() - 10);
+                if (value.type === 'boolean') ctx.fillStyle = this.booleanColor;
+                else if (value.type === 'number') ctx.fillStyle = this.numberColor;
+                else if (value.type === 'string') ctx.fillStyle = this.stringColor;
+                else if (value.type === 'instance') ctx.fillStyle = this.instanceColor;
+                else if (value.type === 'list') ctx.fillStyle = this.listColor;
+                else if (value.type === 'unknown') ctx.globalAlpha = 2/3;
+
+                ctx.font = '10px monospace';
+                ctx.fillText(value.short, x+NODE_WIDTH/2, y + node.visualHeight() - 10);
             }
         }
 

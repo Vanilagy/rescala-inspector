@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { Emitter } from "./emitter";
-import { extractPathFromReScalaResource, type ReScalaEvent, type ReScalaResource } from "./re_scala";
+import { extractPathFromReScalaResource, parseReScalaValue, type ReScalaEvent, type ReScalaResource, type ReScalaValue } from "./re_scala";
 import { remove } from "./utils";
 
 export interface GraphNode {
@@ -13,7 +13,7 @@ export type GraphEdge = [GraphNode, GraphNode];
 export interface HistoryEntry {
     nodes: GraphNode[],
     edges: GraphEdge[],
-    values: Map<GraphNode, string>,
+    values: Map<GraphNode, ReScalaValue>,
     events: ReScalaEvent[]
 }
 
@@ -22,7 +22,7 @@ export class Graph extends Emitter<{
 }> {
     nodes: GraphNode[] = [];
     edges: GraphEdge[] = [];
-    values = new Map<GraphNode, string>();
+    values = new Map<GraphNode, ReScalaValue>();
     history = writable<HistoryEntry[]>([{
         nodes: [],
         edges: [],
@@ -70,6 +70,8 @@ export class Graph extends Emitter<{
             if (this.nodes.some(x => x.id === newNode.id)) throw new Error("Node already exists!");
             this.addNode(newNode);
 
+            this.values.set(newNode, parseReScalaValue(event.value));
+
             if (!event.inputs) return;
 
             for (let input of event.inputs) {
@@ -86,7 +88,7 @@ export class Graph extends Emitter<{
             this.addEdge(n1, n2);
         } else if (event.type === 'Value') {
             let n = this.nodes.find(x => x.id === event.source.idCounter);
-            this.values.set(n, event.value);
+            this.values.set(n, parseReScalaValue(event.value));
 
             this.emit('change');
         } else if (event.type === 'Drop') {

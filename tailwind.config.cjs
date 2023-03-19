@@ -5,6 +5,7 @@ module.exports = {
   content: [
     'extension/**/*.svelte',
     'extension/**/*.html',
+    'extension/**/*.ts',
   ],
   theme: {
     colors: {
@@ -16,6 +17,11 @@ module.exports = {
       'hover-1': 'rgb(var(--hover-1) / <alpha-value>)',
       'hover-strong': 'rgb(var(--hover-strong) / <alpha-value>)',
       'border-1': 'rgb(var(--border-1) / <alpha-value>)',
+      'boolean': 'rgb(var(--boolean) / <alpha-value>)',
+      'number': 'rgb(var(--number) / <alpha-value>)',
+      'string': 'rgb(var(--string) / <alpha-value>)',
+      'instance': 'rgb(var(--instance) / <alpha-value>)',
+      'list': 'rgb(var(--list) / <alpha-value>)',
       ...colors
     },
     extend: {},
