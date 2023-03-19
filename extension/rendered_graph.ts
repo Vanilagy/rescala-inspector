@@ -23,6 +23,8 @@ export class RenderedGraph {
     renderedEdges: RenderedEdge[] = [];
     graphHasChanged = true;
     hoveredNode = writable<LayoutNode>(null);
+    selectedNode = writable<LayoutNode>(null);
+    selectedNodeSubtree = new WeakSet<LayoutNode>();
     mousePosition: Point = { x: 0, y: 0 };
     pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
     viewedHistoryEntry: Writable<HistoryEntry>;
@@ -85,7 +87,6 @@ export class RenderedGraph {
         this.pathStructureRoot.update(x => x);
 
         if (get(this.viewedHistoryEntry) === get(this.graph.history).at(-2)) {
-            console.log("what");
             this.viewHistoryEntry(get(this.graph.history).at(-1));
         } else {
             this.reconcile();
@@ -101,12 +102,16 @@ export class RenderedGraph {
         if (!node.isDummy) {
             this.ctx.globalAlpha = node.visibility.value;
 
+            if (this.nodeIsDimmed(node)) this.ctx.globalAlpha *= 0.15;
+
             let label = node.node.label;
             let value = get(this.viewedHistoryEntry).values.get(node.node);
 
             roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
 
-            ctx.strokeStyle = get(this.hoveredNode) === node ? 'white' : '#474a52';
+            let highlighted = get(this.hoveredNode) === node || get(this.selectedNode) === node;
+
+            ctx.strokeStyle = highlighted ? 'white' : '#474a52';
             ctx.lineWidth = 4;
             ctx.stroke();
 
@@ -130,10 +135,13 @@ export class RenderedGraph {
             ctx.fillStyle = `hsl(${100 + 50 * this.layout.nodes.indexOf(node)}, 60%, 60%)`;
             roundedRect(ctx, x, y, NODE_WIDTH, 100 * node.height, 6);
             ctx.fill();
-            ctx.globalAlpha = 1;
         }
 
-        this.ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1;
+    }
+
+    nodeIsDimmed(node: LayoutNode) {
+        return get(this.selectedNode) && !this.selectedNodeSubtree.has(node);
     }
 
     drawEdge(edge: RenderedEdge) {
@@ -141,6 +149,10 @@ export class RenderedGraph {
 
         let visibility = edge.visibility.value;
         ctx.globalAlpha = visibility;
+
+        if (this.nodeIsDimmed(edge[0]) || this.nodeIsDimmed(edge[1])) {
+            ctx.globalAlpha *= 0.15;
+        }
 
         let path = edge.tweenedPath.value;
 
@@ -227,6 +239,10 @@ export class RenderedGraph {
             edge.visibility.target = 0;
             edge.tweenedPath.target = edge.computePath(Infinity);
         }
+
+        if (!this.layout.nodes.includes(get(this.selectedNode))) {
+            this.selectedNode.set(null);
+        }
     }
 
     viewHistoryEntry(entry: HistoryEntry) {
@@ -238,8 +254,8 @@ export class RenderedGraph {
         this.mousePosition = position;
     }
 
-    checkHover() {
-        let newNode: LayoutNode = null;
+    getNodesOverlappingWithMouse() {
+        let nodes: LayoutNode[] = [];
         let mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
         let mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
 
@@ -257,11 +273,42 @@ export class RenderedGraph {
                 && mouseY >= minPos.y
                 && mouseY < maxPos.y
             ) {
-                newNode = node;
+                nodes.push(node);
             }
         }
 
+        return nodes;
+    }
+
+    checkHover() {
+        let newNode = this.getNodesOverlappingWithMouse()[0] ?? null;
         this.hoveredNode.set(newNode);
+    }
+
+    tryToSelect() {
+        let candidates = this.getNodesOverlappingWithMouse();
+        if (candidates.length === 0) {
+            this.selectedNode.set(null);
+            return;
+        }
+
+        let node = candidates[0];
+        this.selectedNode.set(node);
+
+        this.selectedNodeSubtree = new WeakSet();
+
+        let forwardsQueue = [node];
+        let backwardsQueue = [node];
+        while (forwardsQueue.length > 0) {
+            let nextNode = forwardsQueue.pop();
+            this.selectedNodeSubtree.add(nextNode);
+            forwardsQueue.push(...nextNode.out);
+        }
+        while (backwardsQueue.length > 0) {
+            let nextNode = backwardsQueue.pop();
+            this.selectedNodeSubtree.add(nextNode);
+            backwardsQueue.push(...nextNode.in);
+        }
     }
 
     center() {
