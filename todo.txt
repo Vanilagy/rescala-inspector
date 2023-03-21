@@ -1,2 +1,7 @@
 - Clean up & document code
 - Connecting DOM elements with REScala values
+
+- unknown value text opacity
+- highlighted subtree does not change when graph changes
+- transaction in history & individual events in history
+- flicker upon value change
