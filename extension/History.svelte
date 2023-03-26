@@ -29,12 +29,16 @@
     const goBack = () => {
         let arr = get(renderedGraph.graph.history);
         let index = arr.indexOf($viewedEntry);
-        renderedGraph.viewHistoryEntry(arr[Math.max(index - 1, 0)]);
+        if (index === 0) return;
+
+        renderedGraph.viewHistoryEntry(arr[index - 1]);
     };
     const goForward = () => {
         let arr = get(renderedGraph.graph.history);
         let index = arr.indexOf($viewedEntry);
-        renderedGraph.viewHistoryEntry(arr[Math.min(index + 1, arr.length - 1)]);
+        if (index === arr.length - 1) return;
+
+        renderedGraph.viewHistoryEntry(arr[index + 1]);
     };
 
     const scrollIntoView = (node: HTMLElement, entry: HistoryEntry) => {

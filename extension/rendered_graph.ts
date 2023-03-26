@@ -129,7 +129,7 @@ export class RenderedGraph {
                 else if (value.type === 'string') ctx.fillStyle = this.stringColor;
                 else if (value.type === 'instance') ctx.fillStyle = this.instanceColor;
                 else if (value.type === 'list') ctx.fillStyle = this.listColor;
-                else if (value.type === 'unknown') ctx.globalAlpha = 2/3;
+                else if (value.type === 'unknown') ctx.globalAlpha *= 2/3;
 
                 ctx.font = '10px monospace';
                 ctx.fillText(value.short, x+NODE_WIDTH/2, y + node.visualHeight() - 10);
@@ -274,7 +274,9 @@ export class RenderedGraph {
             edge.tweenedPath.target = edge.computePath(Infinity);
         }
 
-        if (!this.layout.nodes.includes(get(this.selectedNode))) {
+        if (this.layout.nodes.includes(get(this.selectedNode))) {
+            this.computeSelectedNodeSubtree();
+        } else {
             this.selectedNode.set(null);
         }
     }
@@ -328,6 +330,12 @@ export class RenderedGraph {
 
         let node = candidates[0];
         this.selectedNode.set(node);
+        this.computeSelectedNodeSubtree();
+    }
+
+    computeSelectedNodeSubtree() {
+        let node = get(this.selectedNode);
+        if (!node) return;
 
         this.selectedNodeSubtree = new WeakSet();
 
