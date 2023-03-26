@@ -1,6 +1,6 @@
 import { subscribe } from "svelte/internal";
-import { get, writable, type Writable } from "svelte/store";
-import type { HistoryEntry, Graph } from "./graph";
+import { get, writable } from "svelte/store";
+import type { Graph } from "./graph";
 import { GraphLayout, LayoutNode } from "./graph_layout";
 import { EaseType, Tweened } from "./tween";
 import { catmullRom, clamp, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, type Point } from "./utils";
@@ -27,7 +27,7 @@ export class RenderedGraph {
     selectedNodeSubtree = new WeakSet<LayoutNode>();
     mousePosition: Point = { x: 0, y: 0 };
     pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
-    viewedHistoryEntry: Writable<HistoryEntry>;
+    hasCenteredOnce = false;
 
     elevation1Color: string;
     hover1Color: string;
@@ -45,7 +45,6 @@ export class RenderedGraph {
 
         this.ctx = canvas.getContext('2d');
         this.layout = new GraphLayout(this);
-        this.viewedHistoryEntry = writable(get(graph.history).at(-1))
 
         subscribe(this.pathStructureRoot, () => {
             if (this.graphHasChanged) return; // Because we'll reconcile anyway
@@ -104,7 +103,7 @@ export class RenderedGraph {
             if (this.nodeIsDimmed(node)) this.ctx.globalAlpha *= 0.15;
 
             let label = node.node.label;
-            let value = get(this.viewedHistoryEntry).values.get(node.node);
+            let value = node.node.value;
 
             roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
 
@@ -220,14 +219,12 @@ export class RenderedGraph {
         }
         this.pathStructureRoot.update(x => x);
 
-        let history = get(this.graph.history);
+        this.reconcile();
 
-        if (get(this.viewedHistoryEntry) === history.at(-2)) {
-            // If we used to be at the end, stick to the end
-            this.viewHistoryEntry(history.at(-1));
-            if (history.length === 2) this.center();
-        } else {
-            this.reconcile();
+        let shouldCenter = this.layout.nodes.length > 0 && !this.hasCenteredOnce;
+        if (shouldCenter) {
+            this.center();
+            this.hasCenteredOnce = true;
         }
 
         this.graphHasChanged = false;
@@ -279,11 +276,6 @@ export class RenderedGraph {
         } else {
             this.selectedNode.set(null);
         }
-    }
-
-    viewHistoryEntry(entry: HistoryEntry) {
-        this.viewedHistoryEntry.set(entry);
-        this.reconcile();
     }
 
     supplyMousePosition(position: Point) {
@@ -378,7 +370,7 @@ export class RenderedGraph {
         this.scale.update(x => clamp(
             Math.min(window.innerWidth / width, window.innerHeight / height),
             MIN_SCALE,
-            MAX_SCALE
+            1
         ));
         this.originX = window.innerWidth/2 - centerX * get(this.scale);
         this.originY = window.innerHeight/2 - centerY * get(this.scale);

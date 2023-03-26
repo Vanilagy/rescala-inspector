@@ -52,3 +52,33 @@ export const clamp = (x: number, min: number, max: number) => x < min ? min : (x
 export const pickNumber = (value: number, singular: string, plural = singular + 's') => {
     return Math.abs(value) === 1 ? singular : plural;
 };
+
+export const groupBy = <T>(arr: T[], callback: (item: T) => unknown): T[][] => {
+    let result: T[][] = [];
+
+    if (arr.length === 0) {
+        return result;
+    }
+
+    let currentGroup: T[] = [arr[0]];
+    let currentKey = callback(arr[0]);
+
+    for (let i = 1; i < arr.length; i++) {
+        let element = arr[i];
+        let elementKey = callback(element);
+
+        if (elementKey === currentKey) {
+            currentGroup.push(element);
+        } else {
+            result.push(currentGroup);
+            currentGroup = [element];
+            currentKey = elementKey;
+        }
+    }
+
+    if (currentGroup.length > 0) {
+        result.push(currentGroup);
+    }
+
+    return result;
+};

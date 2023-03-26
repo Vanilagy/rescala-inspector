@@ -7,7 +7,7 @@ export interface ReScalaResource {
     path?: string[]
 }
 
-export type ReScalaEvent = {
+export type ReScalaEvent = ({
     type: 'Create',
     resource: ReScalaResource,
     inputs?: ReScalaResource[],
@@ -24,6 +24,13 @@ export type ReScalaEvent = {
     type: 'Value',
     source: ReScalaResource,
     value: string
+} | {
+    type: 'Transaction',
+    id: number,
+    phase: 'started' | 'preparation' | 'admission' | 'propagation' | 'commit' | 'release' | 'observer' | 'ended'
+}) & {
+    transaction: number,
+    batch: number
 };
 
 export const extractPathFromReScalaResource = (resource: ReScalaResource) => {

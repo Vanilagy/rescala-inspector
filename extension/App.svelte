@@ -48,7 +48,7 @@
                 }
                 lastId = result.id;
 
-                graph.processReScalaEvents(result.events.slice(eventsProcessed));
+                graph.supplyReScalaEvents(result.events.slice(eventsProcessed));
                 eventsProcessed = result.events.length;
             };
 

@@ -5,8 +5,7 @@
     export let renderedGraph: RenderedGraph;
     $: selectedNode = renderedGraph.selectedNode; 
     $: graphScale = renderedGraph.scale;
-    $: viewedHistoryEntry = renderedGraph.viewedHistoryEntry;
-    $: formattedValue = $viewedHistoryEntry.values.get($selectedNode?.node)?.formatted;
+    $: formattedValue = $selectedNode?.node.value;
 
     $: popupStyle = (() => {
         if (!$selectedNode) return;

@@ -51,7 +51,7 @@ export class GraphLayout {
     }
 
     reconcile() {
-        let { nodes, edges } = get(this.renderedGraph.viewedHistoryEntry)
+        let { nodes, edges } = this.renderedGraph.graph;
 
         let shownNodes = nodes.filter(x => 
             this.pathIsShown(get(this.renderedGraph.pathStructureRoot), x.reScalaResource.path.slice(0, -1))
