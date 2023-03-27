@@ -1,4 +1,3 @@
 - Clean up & document code
 - Connecting DOM elements with REScala values
-- transaction in history & individual events in history
-- flicker upon value change
+- Animation speed selector

@@ -5,7 +5,7 @@
     export let renderedGraph: RenderedGraph;
     $: selectedNode = renderedGraph.selectedNode; 
     $: graphScale = renderedGraph.scale;
-    $: formattedValue = $selectedNode?.node.value;
+    $: formattedValue = $selectedNode?.layoutNode.node.value;
 
     $: popupStyle = (() => {
         if (!$selectedNode) return;
@@ -35,16 +35,16 @@
     >
         <div class="w-full h-full bg-elevation-1 border border-border-1 shadow rounded-md p-2 px-3 space-y-3">
             <p class="opacity-30 text-[10px] break-words">
-                {@html '/' + $selectedNode.node.reScalaResource.path.slice(0, -1).join('/').replaceAll('/', '/<wbr>')}
+                {@html '/' + $selectedNode.layoutNode.node.reScalaResource.path.slice(0, -1).join('/').replaceAll('/', '/<wbr>')}
             </p>
             <div class="flex w-full !mt-1">
                 <p class="truncate flex-1">
                     <span class="opacity-50 font-bold uppercase text-[11px]">Label</span><br>
-                    {$selectedNode.node.label}
+                    {$selectedNode.layoutNode.node.label}
                 </p>
                 <p class="truncate text-right">
                     <span class="opacity-50 font-bold uppercase text-[11px]">ID</span><br>
-                    {$selectedNode.node.id}
+                    {$selectedNode.layoutNode.node.id}
                 </p>
             </div>
             {#if formattedValue}

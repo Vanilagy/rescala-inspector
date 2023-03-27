@@ -43,6 +43,12 @@ export class Tweened<T> {
         this.to = newTarget;
         this.lastChangedAt = document.timeline.currentTime;
     }
+
+    set(target: T) {
+        this.from = target;
+        this.to = target;
+        this.lastChangedAt = -Infinity;
+    }
 }
 
 export enum EaseType {
@@ -92,6 +98,7 @@ const elasticConst = 2 * Math.PI / 0.3;
 const elasticConst2 = 0.3 / 4;
 const elasticOffsetHalf = Math.pow(2, -10) * Math.sin((.5 - elasticConst2) * elasticConst);
 const elasticOffsetQuarter = Math.pow(2, -10) * Math.sin((.25 - elasticConst2) * elasticConst);
+
 export const ease = (x: number, type: EaseType, p = 0.3) => {
     switch (type) {
         case EaseType.Linear:

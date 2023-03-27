@@ -61,7 +61,6 @@
         let unsubscribe = currentHistoryIndex.subscribe(x => {
             let event = $history[x];
             if (group.includes(event) /*|| (x === -1 && group.length === 0)*/) {
-                console.log(1, node, group, groups.includes(group));
                 node.scrollIntoView({ inline: 'nearest' });
             }
         });

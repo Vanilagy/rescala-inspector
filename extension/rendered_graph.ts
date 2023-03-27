@@ -2,7 +2,8 @@ import { subscribe } from "svelte/internal";
 import { get, writable } from "svelte/store";
 import type { Graph } from "./graph";
 import { GraphLayout, LayoutNode } from "./graph_layout";
-import { EaseType, Tweened } from "./tween";
+import type { ReScalaValue } from "./re_scala";
+import { ease, EaseType, Tweened } from "./tween";
 import { catmullRom, clamp, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, type Point } from "./utils";
 
 export const NODE_WIDTH = 150;
@@ -20,11 +21,13 @@ export class RenderedGraph {
     scale = writable(0.5);
     showNodeBoundingBoxes = false;
     layout: GraphLayout;
+    renderedNodes: RenderedNode[] = [];
     renderedEdges: RenderedEdge[] = [];
+    layoutToRenderedNode = new WeakMap<LayoutNode, RenderedNode>();
     graphHasChanged = true;
-    hoveredNode = writable<LayoutNode>(null);
-    selectedNode = writable<LayoutNode>(null);
-    selectedNodeSubtree = new WeakSet<LayoutNode>();
+    hoveredNode = writable<RenderedNode>(null);
+    selectedNode = writable<RenderedNode>(null);
+    selectedNodeSubtree = new WeakSet<RenderedNode>();
     mousePosition: Point = { x: 0, y: 0 };
     pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
     hasCenteredOnce = false;
@@ -33,6 +36,7 @@ export class RenderedGraph {
     hover1Color: string;
     hoverStrongColor: string;
     border1Color: string;
+    highlight1Color: string;
     textColor: string;
     booleanColor: string;
     numberColor: string;
@@ -60,6 +64,7 @@ export class RenderedGraph {
         this.hover1Color = `rgb(${computedStyle.getPropertyValue('--hover-1')})`;
         this.hoverStrongColor = `rgb(${computedStyle.getPropertyValue('--hover-strong')})`;
         this.border1Color = `rgb(${computedStyle.getPropertyValue('--border-1')})`;
+        this.highlight1Color = `rgb(${computedStyle.getPropertyValue('--highlight-1')})`;
         this.textColor = computedStyle.getPropertyValue('color');
         this.booleanColor = `rgb(${computedStyle.getPropertyValue('--boolean')})`;
         this.numberColor = `rgb(${computedStyle.getPropertyValue('--number')})`;
@@ -86,24 +91,49 @@ export class RenderedGraph {
             this.drawEdge(edge);
         }
 
-        for (let node of this.layout.nodes) {
+        for (let i = 0; i < this.renderedNodes.length; i++) {
+            let node = this.renderedNodes[i];
+            if (node.exitCompletion.target === 1 && node.exitCompletion.value === 1) {
+                this.renderedNodes.splice(i--, 1);
+                continue;
+            }
             this.drawNode(node);
         }
 
         this.checkHover();
     }
 
-    drawNode(node: LayoutNode) {
+    drawNode(node: RenderedNode) {
         let { ctx } = this;
         let { x, y } = node.visualPosition();
 
-        if (!node.isDummy) {
-            this.ctx.globalAlpha = node.visibility.value;
+        if (!node.layoutNode.isDummy) {
+            this.ctx.globalAlpha = node.entryCompletion.value;
 
             if (this.nodeIsDimmed(node)) this.ctx.globalAlpha *= 0.15;
 
-            let label = node.node.label;
-            let value = node.node.value;
+            let label = node.layoutNode.node.label;
+            let value = node.layoutNode.node.value;
+
+            if (node.exitCompletion.target === 1) {
+                node.lastRenderedValue = null;
+            } else {
+                if (node.lastRenderedValue && node.lastRenderedValue !== value) {
+                    node.valueChangeCompletion.set(0);
+                    node.valueChangeCompletion.target = 1;
+                }
+                node.lastRenderedValue = value;
+            }
+
+            ctx.save();
+
+            let scale = lerp(1, 0.75, node.exitCompletion.value)
+                + lerp(0.2, 0, ease(node.valueChangeCompletion.value, EaseType.EaseOutQuint));
+            this.ctx.globalAlpha *= 1 - node.exitCompletion.value;
+            
+            ctx.translate(x + NODE_WIDTH/2, y + node.visualHeight()/2);
+            ctx.scale(scale, scale);
+            ctx.translate(-x - NODE_WIDTH/2, -y - node.visualHeight()/2);
 
             roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
 
@@ -113,6 +143,15 @@ export class RenderedGraph {
             ctx.lineWidth = 4;
             ctx.stroke();
 
+            if (node.valueChangeCompletion.value < 1) {
+                ctx.save();
+                ctx.strokeStyle = this.highlight1Color;
+                ctx.lineWidth = 8;
+                ctx.globalAlpha *= 1 - ease(node.valueChangeCompletion.value, EaseType.EaseInQuad);
+                ctx.stroke();
+                ctx.restore();
+            }
+
             ctx.fillStyle = this.elevation1Color;
             ctx.fill();
 
@@ -120,7 +159,7 @@ export class RenderedGraph {
             ctx.font = '14px sans-serif';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = this.textColor;
-            ctx.fillText(node.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
+            ctx.fillText(node.layoutNode.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
 
             if (value) {
                 if (value.type === 'boolean') ctx.fillStyle = this.booleanColor;
@@ -135,17 +174,19 @@ export class RenderedGraph {
             }
         }
 
+        ctx.restore();
+
         if (this.showNodeBoundingBoxes) {
             ctx.globalAlpha = 0.2;
-            ctx.fillStyle = `hsl(${100 + 50 * this.layout.nodes.indexOf(node)}, 60%, 60%)`;
-            roundedRect(ctx, x, y, NODE_WIDTH, 100 * node.height, 6);
+            ctx.fillStyle = `hsl(${100 + 50 * this.renderedNodes.indexOf(node)}, 60%, 60%)`;
+            roundedRect(ctx, x, y, NODE_WIDTH, 100 * node.layoutNode.height, 6);
             ctx.fill();
         }
 
         ctx.globalAlpha = 1;
     }
 
-    nodeIsDimmed(node: LayoutNode) {
+    nodeIsDimmed(node: RenderedNode) {
         return get(this.selectedNode) && !this.selectedNodeSubtree.has(node);
     }
 
@@ -234,15 +275,31 @@ export class RenderedGraph {
         this.layout.reconcile();
         this.layout.layOut();
 
-        let hit = new Set<RenderedEdge>();
-        for (let layoutNode of this.layout.nodes) {
-            if (layoutNode.isDummy) continue;
-            
-            for (let child of layoutNode.out) {
-                let current = child;
-                let waypoints = [layoutNode];
+        let hitNodes = new Set<RenderedNode>();
+        let hitEdges = new Set<RenderedEdge>();
 
-                while (current.isDummy) {
+        for (let layoutNode of this.layout.nodes) {
+            let node = this.renderedNodes.find(x => x.layoutNode === layoutNode || (x.layoutNode.node && x.layoutNode.node.id === layoutNode.node?.id));
+            if (!node) {
+                node = new RenderedNode(layoutNode, this);
+                this.renderedNodes.push(node);
+            } else {
+                node.layoutNode = layoutNode;
+            }
+
+            this.layoutToRenderedNode.set(layoutNode, node);
+            node.exitCompletion.target = 0;
+            hitNodes.add(node);
+        }
+
+        for (let node of this.renderedNodes) {
+            if (node.layoutNode.isDummy) continue;
+            
+            for (let child of node.out) {
+                let current = child;
+                let waypoints = [node];
+
+                while (current.layoutNode.isDummy) {
                     waypoints.push(current);
                     current = current.out[0];
                 }
@@ -260,18 +317,24 @@ export class RenderedGraph {
 
                 edge.visibility.target = 1;
                 edge.tweenedPath.target = edge.computePath(Infinity);
-                hit.add(edge);
+                hitEdges.add(edge);
             }
         }
 
         for (let edge of this.renderedEdges) {
-            if (hit.has(edge)) continue;
+            if (hitEdges.has(edge)) continue;
 
             edge.visibility.target = 0;
             edge.tweenedPath.target = edge.computePath(Infinity);
         }
 
-        if (this.layout.nodes.includes(get(this.selectedNode))) {
+        for (let node of this.renderedNodes) {
+            if (hitNodes.has(node)) continue;
+
+            node.exitCompletion.target = 1;
+        }
+
+        if (this.renderedNodes.includes(get(this.selectedNode))) {
             this.computeSelectedNodeSubtree();
         } else {
             this.selectedNode.set(null);
@@ -283,12 +346,12 @@ export class RenderedGraph {
     }
 
     getNodesOverlappingWithMouse() {
-        let nodes: LayoutNode[] = [];
+        let nodes: RenderedNode[] = [];
         let mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
         let mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
 
-        for (let node of this.layout.nodes) {
-            if (node.isDummy) continue;
+        for (let node of this.renderedNodes) {
+            if (node.layoutNode.isDummy) continue;
 
             let minPos = node.visualPosition();
             let maxPos = structuredClone(minPos);
@@ -351,7 +414,7 @@ export class RenderedGraph {
         let maxX = -Infinity;
         let maxY = -Infinity;
 
-        for (let node of this.layout.nodes) {
+        for (let node of this.renderedNodes) {
             let pos = node.computePosition();
 
             minX = Math.min(minX, pos.x);
@@ -377,10 +440,114 @@ export class RenderedGraph {
     }
 }
 
+export class RenderedNode {
+    tweenedPosition = new Tweened<Point>(
+        null,
+        ANIMATION_DURATION,
+        lerpPoints,
+        EaseType.EaseOutElasticQuarter
+    );
+    entryCompletion = new Tweened(
+        0,
+        ANIMATION_DURATION,
+        lerp,
+        EaseType.EaseOutQuint
+    );
+    exitCompletion = new Tweened(
+        0,
+        0.4 * ANIMATION_DURATION,
+        lerp,
+        EaseType.EaseOutQuint
+    );
+    valueChangeCompletion = new Tweened(
+        1,
+        0.75 * ANIMATION_DURATION,
+        lerp
+    );
+    lastRenderedValue: ReScalaValue = null;
+
+    constructor(public layoutNode: LayoutNode, public renderedGraph: RenderedGraph) {
+        this.entryCompletion.target = 1;
+    }
+
+    get in() {
+        return this.layoutNode.in.map(x => this.renderedGraph.layoutToRenderedNode.get(x));
+    }
+    
+    get out() {
+        return this.layoutNode.out.map(x => this.renderedGraph.layoutToRenderedNode.get(x));
+    }
+
+    computePosition(center = false): Point {
+        let x = 350 * -this.layoutNode.layer;
+        let y = 100 * this.layoutNode.x;
+        let pos = { x, y };
+
+        if (center) {
+            pos.x += NODE_WIDTH/2;
+            pos.y += NODE_HEIGHT/2;
+        }
+
+        return pos;
+    }
+
+    visualPosition(time?: number) {
+        let actualPosition = this.computePosition();
+        if (!this.tweenedPosition.target || this.tweenedPosition.target.x !== actualPosition.x || this.tweenedPosition.target.y !== actualPosition.y) {
+            this.tweenedPosition.target = actualPosition;
+        }
+
+        let entryCompletion = this.entryCompletion.valueAt(time);
+        let pos = this.tweenedPosition.valueAt(time);
+
+        pos.y -= (1 - entryCompletion) * 100;
+
+        return pos;
+    }
+
+    visualHeight(time?: number) {
+        return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.entryCompletion.valueAt(time));
+    }
+
+    visualCenter(time?: number) {
+        let pos = this.visualPosition(time);
+        pos.x += NODE_WIDTH/2;
+        pos.y += this.visualHeight(time)/2;
+
+        return pos;
+    }
+
+    posOnBorder(angle: number, time?: number) {
+        let { x: centerX, y: centerY } = this.visualCenter(time);
+
+        let margin = 7;
+        let extendedWidth = NODE_WIDTH/2 + margin;
+        let extendedHeight = NODE_HEIGHT/2 + margin;
+
+        let x = Math.cos(angle) * extendedWidth;
+        let y = Math.sin(angle) * extendedHeight;
+
+        if (Math.abs(Math.tan(angle)) < 1) { // equiv to Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
+            let fac = extendedWidth / Math.abs(x);
+            x *= fac;
+            y *= fac;
+        } else {
+            let fac = extendedHeight / Math.abs(y);
+            x *= fac;
+            y *= fac;
+        }
+
+        return {
+            x: centerX + x,
+            y: centerY + y
+        };
+    }
+}
+
 let renderedEdgeId = 0;
-export class RenderedEdge extends Array<LayoutNode> {
+export class RenderedEdge extends Array<RenderedNode> {
     id = renderedEdgeId++;
-    waypoints: LayoutNode[] = [this[0], this[1]];
+    waypoints: RenderedNode[] = [this[0], this[1]];
     tweenedPath = new Tweened<{ x: number, y: number }[]>(
         null,
         ANIMATION_DURATION,
@@ -395,7 +562,7 @@ export class RenderedEdge extends Array<LayoutNode> {
         EaseType.EaseOutQuint
     );
 
-    constructor(from: LayoutNode, to: LayoutNode) {
+    constructor(from: RenderedNode, to: RenderedNode) {
         super(from, to);
     }
 
@@ -436,8 +603,8 @@ export class RenderedEdge extends Array<LayoutNode> {
                 let p2 = to.visualCenter(time);
                 let angle = Math.atan2(p2.y-p1.y, p2.x-p1.x);
 
-                if (!from.isDummy) p1 = from.posOnBorder(angle, time);
-                if (!to.isDummy) p2 = to.posOnBorder(Math.PI + angle, time);
+                if (!from.layoutNode.isDummy) p1 = from.posOnBorder(angle, time);
+                if (!to.layoutNode.isDummy) p2 = to.posOnBorder(Math.PI + angle, time);
 
                 if (i === 0) points.push(p1);
                 points.push(p2);

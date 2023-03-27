@@ -1,7 +1,6 @@
-import { get, writable } from "svelte/store";
+import { get } from "svelte/store";
 import type { Graph, GraphNode } from "./graph";
-import { NODE_WIDTH, NODE_HEIGHT, ANIMATION_DURATION, RenderedGraph, type PathStructureNode } from "./rendered_graph";
-import { EaseType, Tweened } from "./tween";
+import type { RenderedGraph, PathStructureNode } from "./rendered_graph";
 import { lerp, lerpPoints, remove, type Point } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
@@ -346,22 +345,7 @@ export class LayoutNode {
     component: number = null;
     neighbor: LayoutNode = null;
 
-    tweenedPosition = new Tweened<Point>(
-        null,
-        ANIMATION_DURATION,
-        lerpPoints,
-        EaseType.EaseOutElasticQuarter
-    );
-    visibility = new Tweened(
-        0,
-        ANIMATION_DURATION,
-        lerp,
-        EaseType.EaseOutQuint
-    );
-
-    constructor(public node?: GraphNode) {
-        this.visibility.target = 1;
-    }
+    constructor(public node?: GraphNode) {}
 
     get isDummy() {
         return !this.node;
@@ -369,71 +353,6 @@ export class LayoutNode {
 
     get height() {
         return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
-    }
-
-    computePosition(center = false): Point {
-        let x = 350 * -this.layer;
-        let y = 100 * this.x;
-        let pos = { x, y };
-
-        if (center) {
-            pos.x += NODE_WIDTH/2;
-            pos.y += NODE_HEIGHT/2;
-        }
-
-        return pos;
-    }
-
-    visualPosition(time?: number) {
-        let actualPosition = this.computePosition();
-        if (!this.tweenedPosition.target || this.tweenedPosition.target.x !== actualPosition.x || this.tweenedPosition.target.y !== actualPosition.y) {
-            this.tweenedPosition.target = actualPosition;
-        }
-
-        let visibility = this.visibility.valueAt(time);
-        let pos = this.tweenedPosition.valueAt(time);
-
-        pos.y -= (1 - visibility) * 100;
-
-        return pos;
-    }
-
-    visualHeight(time?: number) {
-        return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.visibility.valueAt(time));
-    }
-
-    visualCenter(time?: number) {
-        let pos = this.visualPosition(time);
-        pos.x += NODE_WIDTH/2;
-        pos.y += this.visualHeight(time)/2;
-
-        return pos;
-    }
-
-    posOnBorder(angle: number, time?: number) {
-        let { x: centerX, y: centerY } = this.visualCenter(time);
-
-        let margin = 7;
-        let extendedWidth = NODE_WIDTH/2 + margin;
-        let extendedHeight = NODE_HEIGHT/2 + margin;
-
-        let x = Math.cos(angle) * extendedWidth;
-        let y = Math.sin(angle) * extendedHeight;
-
-        if (Math.abs(Math.tan(angle)) < 1) { // equiv to Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
-            let fac = extendedWidth / Math.abs(x);
-            x *= fac;
-            y *= fac;
-        } else {
-            let fac = extendedHeight / Math.abs(y);
-            x *= fac;
-            y *= fac;
-        }
-
-        return {
-            x: centerX + x,
-            y: centerY + y
-        };
     }
 }
 
