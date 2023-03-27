@@ -5,7 +5,7 @@
     export let renderedGraph: RenderedGraph;
     $: selectedNode = renderedGraph.selectedNode; 
     $: graphScale = renderedGraph.scale;
-    $: formattedValue = $selectedNode?.layoutNode.node.value;
+    $: value = $selectedNode?.layoutNode.node.value;
 
     $: popupStyle = (() => {
         if (!$selectedNode) return;
@@ -22,6 +22,12 @@
             top
         };
     })();
+
+    const inspect = () => {
+        chrome.devtools.inspectedWindow.eval(
+            `inspect(window.domAssocations.get(${$selectedNode.layoutNode.node.id}))`
+        );
+    };
 </script>
 
 {#if $selectedNode}
@@ -47,16 +53,23 @@
                     {$selectedNode.layoutNode.node.id}
                 </p>
             </div>
-            {#if formattedValue}
+            {#if value.formatted !== null}
                 <div>
                     <span class="opacity-50 font-bold uppercase text-[11px]">Value</span><br>
-                    <div
-                        class="absolute value-continer font-mono whitespace-pre bg-elevation-2 px-2 py-1 rounded-md
-                            shadow overflow-hidden min-w-[calc(100%-24px)] max-w-[calc(100%-24px)] max-h-[46px] hover:overflow-auto hover:max-h-64
-                            hover:max-w-[400px] select-text"
-                    >
-                        {@html formattedValue}
-                    </div>
+                    
+                    {#if value.type === 'dom-element'}
+                        <button class="bg-elevation-2 px-2 py-1 rounded-md shadow w-full hover:bg-hover-2" on:click={inspect}>
+                            Inspect DOM element
+                        </button>
+                    {:else}
+                        <div
+                            class="absolute value-continer font-mono whitespace-pre bg-elevation-2 px-2 py-1 rounded-md
+                                shadow overflow-hidden min-w-[calc(100%-24px)] max-w-[calc(100%-24px)] max-h-[46px] hover:overflow-auto hover:max-h-64
+                                hover:max-w-[400px] select-text"
+                        >
+                            {@html value.formatted}
+                        </div>
+                    {/if}
                 </div>
             {/if}
         </div>

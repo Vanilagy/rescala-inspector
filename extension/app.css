@@ -10,6 +10,7 @@
         --elevation-3: 156 163 175;
         --highlight-1: 59 130 246;
         --hover-1: 229 231 235;
+        --hover-2: 229 231 235;
         --hover-strong: 0 0 0;
         --border-1: 203 205 209;
         --boolean: 249 115 22;
@@ -17,6 +18,7 @@
         --string: 16 185 129;
         --instance: 132 204 22;
         --list: 234 179 8;
+        --dom-element: 145 95 220;
     }
 
     body {
@@ -33,6 +35,7 @@
             --elevation-3: 82 82 91;
             --highlight-1: 59 130 246;
             --hover-1: 39 39 42;
+            --hover-2: 82 82 91;
             --hover-strong: 255 255 255;
             --border-1: 63 63 70;
         }

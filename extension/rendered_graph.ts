@@ -45,6 +45,7 @@ export class RenderedGraph {
     stringColor: string;
     instanceColor: string;
     listColor: string;
+    domElementColor: string;
 
     constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
         graph.on('change', () => this.graphHasChanged = true);
@@ -73,6 +74,7 @@ export class RenderedGraph {
         this.stringColor = `rgb(${computedStyle.getPropertyValue('--string')})`;
         this.instanceColor = `rgb(${computedStyle.getPropertyValue('--instance')})`;
         this.listColor = `rgb(${computedStyle.getPropertyValue('--list')})`;
+        this.domElementColor = `rgb(${computedStyle.getPropertyValue('--dom-element')})`;
 
         this.onGraphChange();
 
@@ -169,6 +171,7 @@ export class RenderedGraph {
                 else if (value.type === 'string') ctx.fillStyle = this.stringColor;
                 else if (value.type === 'instance') ctx.fillStyle = this.instanceColor;
                 else if (value.type === 'list') ctx.fillStyle = this.listColor;
+                else if (value.type === 'dom-element') ctx.fillStyle = this.domElementColor;
                 else if (value.type === 'unknown') ctx.globalAlpha *= 2/3;
 
                 ctx.font = '10px monospace';
@@ -336,7 +339,7 @@ export class RenderedGraph {
             node.exitCompletion.target = 1;
         }
 
-        if (this.renderedNodes.includes(get(this.selectedNode))) {
+        if (this.layout.nodes.some(x => this.layoutToRenderedNode.get(x) === get(this.selectedNode))) {
             this.computeSelectedNodeSubtree();
         } else {
             this.selectedNode.set(null);

@@ -15,6 +15,7 @@ module.exports = {
       'elevation-3': 'rgb(var(--elevation-3) / <alpha-value>)',
       'highlight-1': 'rgb(var(--highlight-1) / <alpha-value>)',
       'hover-1': 'rgb(var(--hover-1) / <alpha-value>)',
+      'hover-2': 'rgb(var(--hover-2) / <alpha-value>)',
       'hover-strong': 'rgb(var(--hover-strong) / <alpha-value>)',
       'border-1': 'rgb(var(--border-1) / <alpha-value>)',
       'boolean': 'rgb(var(--boolean) / <alpha-value>)',

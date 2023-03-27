@@ -46,7 +46,7 @@ export const extractPathFromReScalaResource = (resource: ReScalaResource) => {
 
 export interface ReScalaValue {
     raw: string,
-    type: 'boolean' | 'number' | 'string' | 'instance' | 'list' | 'unknown',
+    type: 'boolean' | 'number' | 'string' | 'instance' | 'list' | 'dom-element' | 'unknown',
     formatted: string,
     short: string
 }
@@ -62,6 +62,8 @@ export const parseReScalaValue = (value: string): ReScalaValue => {
         type = 'number';
     } else if (value.startsWith('"') && value.endsWith('"')) {
         type = 'string';
+    } else if (value === '<some html>') {
+        type = 'dom-element';
     } else if (/^(\w\.?)+\(/.test(value)) {
         let match = /^(\w\.?)+\(/.exec(value)[0].slice(0, -1);
         type = match === 'List' ? 'list' : 'instance';
