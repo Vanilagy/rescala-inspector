@@ -1,7 +1,6 @@
 import { get, writable } from "svelte/store";
-import { Emitter } from "./emitter";
 import { extractPathFromReScalaResource, parseReScalaValue, type ReScalaEvent, type ReScalaResource, type ReScalaValue } from "./re_scala";
-import { remove } from "./utils";
+import { Emitter, remove } from "./utils";
 
 export interface GraphNode {
     id: number,

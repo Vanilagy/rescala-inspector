@@ -5,7 +5,39 @@ import { lerp, lerpPoints, remove, type Point } from "./utils";
 
 const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
-export class GraphLayout {
+export class LayoutNode {
+    layer: number = 0;
+    x: number = 0;
+    a: number;
+    in: LayoutNode[] = [];
+    out: LayoutNode[] = [];
+    component: number = null;
+    neighbor: LayoutNode = null;
+
+    constructor(public node?: GraphNode) {}
+
+    get isDummy() {
+        return !this.node;
+    }
+
+    get height() {
+        return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
+    }
+}
+
+export class LayoutEdge extends Array<LayoutNode> {
+    waypoints: LayoutNode[] = [this[0], this[1]];
+
+    constructor(from: LayoutNode, to: LayoutNode) {
+        super(from, to);
+    }
+
+    get span() {
+        return this[0].layer - this[1].layer;
+    }
+}
+
+export class LayoutGraph {
     nodes: LayoutNode[] = [];
     edges: LayoutEdge[] = [];
 
@@ -333,37 +365,5 @@ export class GraphLayout {
                 break;
             }
         }
-    }
-}
-
-export class LayoutNode {
-    layer: number = 0;
-    x: number = 0;
-    a: number;
-    in: LayoutNode[] = [];
-    out: LayoutNode[] = [];
-    component: number = null;
-    neighbor: LayoutNode = null;
-
-    constructor(public node?: GraphNode) {}
-
-    get isDummy() {
-        return !this.node;
-    }
-
-    get height() {
-        return this.isDummy ? DUMMY_NODE_HEIGHT_FACTOR : 1;
-    }
-}
-
-export class LayoutEdge extends Array<LayoutNode> {
-    waypoints: LayoutNode[] = [this[0], this[1]];
-
-    constructor(from: LayoutNode, to: LayoutNode) {
-        super(from, to);
-    }
-
-    get span() {
-        return this[0].layer - this[1].layer;
     }
 }
