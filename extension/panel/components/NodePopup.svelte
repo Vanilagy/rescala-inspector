@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fly } from "svelte/transition";
-    import type { RenderedGraph } from "./rendered_graph";
+    import type { RenderedGraph } from "../ts/rendered_graph";
 
     export let renderedGraph: RenderedGraph;
     $: selectedNode = renderedGraph.selectedNode; 

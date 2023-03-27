@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { saturate } from "./utils";
+    import { saturate } from "../ts/utils";
     import Icon from '@iconify/svelte';
-    import { animationSpeedSetting } from "./rendered_graph";
+    import { animationSpeedSetting } from "../ts/rendered_graph";
 
     let dragging = false;
 

@@ -1,9 +1,9 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
     import { tick } from 'svelte';
-    import type { RenderedGraph } from './rendered_graph';
-    import type { ReScalaEvent } from './re_scala';
-    import { groupBy } from './utils';
+    import type { RenderedGraph } from '../ts/rendered_graph';
+    import type { ReScalaEvent } from '../ts/re_scala';
+    import { groupBy } from '../ts/utils';
 
     const GROUPING_MODES = {
         'Batch': (history: ReScalaEvent[]) => groupBy(history, x => x.batch),

@@ -1,6 +1,6 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
-    import type { RenderedGraph } from './rendered_graph';
+    import type { RenderedGraph } from '../ts/rendered_graph';
     import StructureNode from './StructureNode.svelte';
 
     let structureShown = false;

@@ -1,14 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { get} from "svelte/store";
-    import { Graph } from "./graph";
-    import { MAX_SCALE, MIN_SCALE, RenderedGraph } from "./rendered_graph";
-    import type { ReScalaEvent } from "./re_scala";
-    import Structure from "./Structure.svelte";
-    import History from "./History.svelte";
-    import ZoomIndicator from "./ZoomIndicator.svelte";
-    import NodePopup from "./NodePopup.svelte";
-    import SpeedSlider from "./SpeedSlider.svelte";
+    import { Graph } from "./ts/graph";
+    import { MAX_SCALE, MIN_SCALE, RenderedGraph } from "./ts/rendered_graph";
+    import type { ReScalaEvent } from "./ts/re_scala";
+    import Structure from "./components/Structure.svelte";
+    import History from "./components/History.svelte";
+    import ZoomIndicator from "./components/ZoomIndicator.svelte";
+    import NodePopup from "./components/NodePopup.svelte";
+    import SpeedSlider from "./components/SpeedSlider.svelte";
 
     let canvas: HTMLCanvasElement;
 

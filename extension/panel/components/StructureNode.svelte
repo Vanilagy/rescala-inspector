@@ -1,6 +1,6 @@
 <script lang="ts">
     import Icon from '@iconify/svelte';
-    import type { PathStructureNode } from './rendered_graph';
+    import type { PathStructureNode } from '../ts/rendered_graph';
 
     export let node: PathStructureNode;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { MAX_SCALE, MIN_SCALE, type RenderedGraph } from "./rendered_graph";
-    import { clamp } from "./utils";
+    import { MAX_SCALE, MIN_SCALE, type RenderedGraph } from "../ts/rendered_graph";
+    import { clamp } from "../ts/utils";
     import Icon from '@iconify/svelte';
 
     export let renderedGraph: RenderedGraph;
