@@ -8,6 +8,7 @@
     import History from "./History.svelte";
     import ZoomIndicator from "./ZoomIndicator.svelte";
     import NodePopup from "./NodePopup.svelte";
+    import SpeedSlider from "./SpeedSlider.svelte";
 
     let canvas: HTMLCanvasElement;
 
@@ -139,3 +140,5 @@
     <History {renderedGraph} />
     <ZoomIndicator {renderedGraph} />
 {/if}
+
+<SpeedSlider />

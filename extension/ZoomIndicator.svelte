@@ -14,7 +14,12 @@
         if (!dragging) return;
 
         let logScale = (-e.movementY / 128) * Math.log2(MAX_SCALE / MIN_SCALE);
-        $scale = clamp($scale * 2**logScale, MIN_SCALE, MAX_SCALE);
+        let scaleChange = 2**logScale;
+
+        // Zoom into the center of the screen
+        renderedGraph.originX = (renderedGraph.originX - window.innerWidth/2) * scaleChange + window.innerWidth/2;
+        renderedGraph.originY = (renderedGraph.originY - window.innerHeight/2) * scaleChange + window.innerHeight/2;
+        $scale = clamp($scale * scaleChange, MIN_SCALE, MAX_SCALE);
     };
 </script>
 

@@ -26,6 +26,7 @@ export class Tweened<T> {
         let elapsed = time - this.lastChangedAt;
         let duration = typeof this.duration === 'number' ? this.duration : this.duration(this.from, this.to);
         let t = saturate(elapsed / duration);
+        if (isNaN(t)) t = 1;
 
         if (this.returnInputs) {
             if (t === 0) return this.from;

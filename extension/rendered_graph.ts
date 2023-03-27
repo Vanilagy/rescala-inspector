@@ -8,9 +8,11 @@ import { catmullRom, clamp, lerp, lerpPoints, quadraticBezier, roundedRect, type
 
 export const NODE_WIDTH = 150;
 export const NODE_HEIGHT = 70;
-export const ANIMATION_DURATION = 1000;
 export const MIN_SCALE = 2**-7;
 export const MAX_SCALE = 2**2;
+
+export const animationSpeedSetting = writable(2);
+const animationDuration = () => [10000, 3000, 1000, 500, 0][get(animationSpeedSetting)];
 
 export type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
 
@@ -443,25 +445,25 @@ export class RenderedGraph {
 export class RenderedNode {
     tweenedPosition = new Tweened<Point>(
         null,
-        ANIMATION_DURATION,
+        animationDuration,
         lerpPoints,
         EaseType.EaseOutElasticQuarter
     );
     entryCompletion = new Tweened(
         0,
-        ANIMATION_DURATION,
+        animationDuration,
         lerp,
         EaseType.EaseOutQuint
     );
     exitCompletion = new Tweened(
         0,
-        0.4 * ANIMATION_DURATION,
+        () => 0.4 * animationDuration(),
         lerp,
         EaseType.EaseOutQuint
     );
     valueChangeCompletion = new Tweened(
         1,
-        0.75 * ANIMATION_DURATION,
+        () => 0.75 * animationDuration(),
         lerp
     );
     lastRenderedValue: ReScalaValue = null;
@@ -550,14 +552,14 @@ export class RenderedEdge extends Array<RenderedNode> {
     waypoints: RenderedNode[] = [this[0], this[1]];
     tweenedPath = new Tweened<{ x: number, y: number }[]>(
         null,
-        ANIMATION_DURATION,
+        animationDuration,
         lerpPaths,
         EaseType.EaseOutElasticQuarter,
         true
     );
     visibility = new Tweened(
         0,
-        (_, to: number) => (to === 0 ? 0.4 : 1) * ANIMATION_DURATION,
+        (_, to: number) => (to === 0 ? 0.4 : 1) * animationDuration(),
         lerp,
         EaseType.EaseOutQuint
     );
