@@ -1,1 +1,1 @@
-chrome.devtools.panels.create('REScala Inspector', null, 'panel/panel.html', () => { /* noop */ });
+chrome.devtools.panels.create('REScala Inspector', null, 'panel/panel.html', () => { /* no-op */ });

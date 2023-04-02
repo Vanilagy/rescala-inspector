@@ -8,6 +8,7 @@
 	export let renderedGraph: RenderedGraph;
 	$: root = renderedGraph.pathStructureRoot;
 
+	// Flag all paths as being shown
 	const showAll = () => {
 		root.update(x => {
 			const traverse = (node: typeof x) => {

@@ -9,17 +9,22 @@
 	$: completion = (logScale - Math.log2(MIN_SCALE)) / Math.log2(MAX_SCALE / MIN_SCALE);
 
 	let dragging = false;
+	let dragOffset: number;
+	let dragStartScale: number;
 
 	const drag = (e: PointerEvent) => {
 		if (!dragging) return;
 
-		let logScale = (-e.movementY / 128) * Math.log2(MAX_SCALE / MIN_SCALE);
-		let scaleChange = 2**logScale;
+		dragOffset += e.movementY;
+
+		let logScale = (-dragOffset / 128) * Math.log2(MAX_SCALE / MIN_SCALE);
+		let newScale = dragStartScale * 2**logScale;
+		let scaleChange = newScale / $scale;
 
 		// Zoom into the center of the screen
 		renderedGraph.originX = (renderedGraph.originX - window.innerWidth/2) * scaleChange + window.innerWidth/2;
 		renderedGraph.originY = (renderedGraph.originY - window.innerHeight/2) * scaleChange + window.innerHeight/2;
-		$scale = clamp($scale * scaleChange, MIN_SCALE, MAX_SCALE);
+		$scale = clamp(newScale, MIN_SCALE, MAX_SCALE);
 	};
 </script>
 
@@ -37,7 +42,7 @@
 			class="w-2 h-4 rounded-md bg-elevation-3 absolute left-0 shadow hover:bg-hover-strong cursor-grab"
 			class:bg-hover-strong={dragging}
 			style="bottom: {100 * completion}%; transform: translateY({100 * completion}%);"
-			on:pointerdown={() => dragging = true}
+			on:pointerdown={() => (dragging = true, dragOffset = 0, dragStartScale = $scale)}
 		/>
 	</div>
 </div>

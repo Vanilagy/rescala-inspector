@@ -1,3 +1,4 @@
+/** Removes an item from an array. */
 export const remove = <T>(arr: T[], item: T) => {
 	const index = arr.indexOf(item);
 	if (index >= 0) arr.splice(index, 1);
@@ -23,6 +24,7 @@ export const quadraticBezierDerivative = (p0: number, p1: number, p2: number, t:
 	return 2*(1-t)*(p1-p0) + 2*t*(p2-p1);
 };
 
+/** Computes a point on a 1-dimensional centripetal Catmull–Rom spline given four control points and `t`. */
 export const catmullRom = (t: number, p0: number, p1: number, p2: number, p3: number) => {
 	let point = t*t*t*((-1) * p0 + 3 * p1 - 3 * p2 + p3) / 2;
 	point += t*t*(2*p0 - 5 * p1+ 4 * p2 - p3) / 2;
@@ -40,10 +42,12 @@ export interface Point {
 }
 export type Path = Point[];
 
+/** Linearly inpolates between two points. */
 export const lerpPoints = (p1: Point, p2: Point, t: number): Point => {
 	return { x: lerp(p1.x, p2.x, t), y: lerp(p1.y, p2.y, t) };
 };
 
+/** Linearly interpolates between two paths. */
 export const lerpPaths = (path1: Path, path2: Path, t: number) => {
 	const finalPath: Path = Array(Math.max(path1.length, path2.length));
 
@@ -69,15 +73,19 @@ export const getPositionAlongPath = (path: { x: number, y: number }[], t: number
 	return lerpPoints(p1, p2, index - indexLow);
 };
 
+/** Clamps a value into the range [0, 1]. */
 export const saturate = (x: number) => Math.min(Math.max(x, 0), 1);
 
 export const clamp = (x: number, min: number, max: number) => x < min ? min : (x > max ? max : x);
 
-/** Picks singular or plural based on the passed value. */
+/** Picks a singular or plural word based on the passed value. */
 export const pickNumber = (value: number, singular: string, plural = singular + 's') => {
 	return Math.abs(value) === 1 ? singular : plural;
 };
 
+/**
+ * Groups successive array elements such that the callback evaluated on every items in a group returns the same value.
+ */
 export const groupBy = <T>(arr: T[], callback: (item: T) => unknown): T[][] => {
 	const result: T[][] = [];
 
@@ -108,6 +116,7 @@ export const groupBy = <T>(arr: T[], callback: (item: T) => unknown): T[][] => {
 	return result;
 };
 
+/** Custom event emitter implementation */
 export class Emitter<T extends Record<string, unknown>> {
 	listeners = new Map<keyof T, Set<(data: unknown) => void>>();
 

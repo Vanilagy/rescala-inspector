@@ -1,5 +1,8 @@
 import { saturate } from './utils';
 
+/**
+ * Helper class for modelling _tweened_ values, i.e. values that are smoothly interpolated from one state to another.
+ */
 export class Tweened<T> {
 	private from: T = null;
 	private to: T = null;
@@ -26,9 +29,10 @@ export class Tweened<T> {
 		const elapsed = time - this.lastChangedAt;
 		const duration = typeof this.duration === 'number' ? this.duration : this.duration(this.from, this.to);
 		let t = saturate(elapsed / duration);
-		if (isNaN(t)) t = 1;
+		if (isNaN(t)) t = 1; // Can occur when duration is 0
 
 		if (this.returnInputs) {
+			// This way we can avoid calling lerp, but it might be undesirable if you expect a new object instance
 			if (t === 0) return this.from;
 			if (t === 1) return this.to;
 		}

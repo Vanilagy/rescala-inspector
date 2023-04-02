@@ -9,8 +9,15 @@
 
 <div>
 	<div class="flex">
-		<button class="flex space-x-1 items-center group w-full text-left min-w-0" on:click={() => expanded = !expanded}>
-			<Icon icon="heroicons:chevron-right-20-solid" class="w-4 h-4 opacity-50 group-hover:opacity-100 {expanded && 'rotate-90'} {node.children.length === 0 && '!opacity-0'}" />
+		<button
+			class="flex space-x-1 items-center group w-full text-left min-w-0"
+			on:click={() => expanded = !expanded}
+		>
+			<Icon
+				icon="heroicons:chevron-right-20-solid"
+				class="w-4 h-4 opacity-50 group-hover:opacity-100
+					{expanded && 'rotate-90'} {node.children.length === 0 && '!opacity-0'}"
+			/>
 
 			<p class="flex-1 truncate">{node.label}</p>
 		</button>

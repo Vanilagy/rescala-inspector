@@ -1,6 +1,6 @@
 {
     "name": "REScala inspector",
-    "description": "Amazing description",
+    "description": "An extension that interactively visualizes the graph of REScala program.",
     "version": "1.0.0",
     "manifest_version": 3,
     "action": {

@@ -12,8 +12,9 @@ export const NODE_HEIGHT = 70;
 export const MIN_SCALE = 2**-7;
 export const MAX_SCALE = 2**2;
 
-export const animationSpeedSetting = writable(2);
-export const animationDuration = () => [10000, 3000, 1000, 500, 0][get(animationSpeedSetting)];
+export const ANIMATION_SPEED_OPTIONS = [10000, 3000, 1000, 500, 0];
+export const animationSpeedSetting = writable(Math.floor(ANIMATION_SPEED_OPTIONS.length / 2));
+export const animationDuration = () => ANIMATION_SPEED_OPTIONS[get(animationSpeedSetting)];
 
 export type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
 
@@ -22,17 +23,20 @@ export class RenderedGraph {
 	originX = 0;
 	originY = 0;
 	scale = writable(0.5);
-	showNodeBoundingBoxes = false;
+	mousePosition: Point = { x: 0, y: 0 };
+
 	layout: LayoutGraph;
 	renderedNodes: RenderedNode[] = [];
 	renderedEdges: RenderedEdge[] = [];
 	layoutToRenderedNode = new WeakMap<LayoutNode, RenderedNode>();
-	graphHasChanged = true;
+
 	hoveredNode = writable<RenderedNode>(null);
 	selectedNode = writable<RenderedNode>(null);
 	selectedNodeSubtree = new WeakSet<RenderedNode>();
-	mousePosition: Point = { x: 0, y: 0 };
 	pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
+
+	graphHasChanged = true;
+	showNodeBoundingBoxes = false;
 	hasCenteredOnce = false;
 
 	elevation1Color: string;
@@ -63,6 +67,7 @@ export class RenderedGraph {
 	render() {
 		const { ctx } = this;
 
+		// Keep the colors in sync with the CSS variables (in case the theme has changed)
 		const computedStyle = getComputedStyle(document.body);
 		this.elevation1Color = `rgb(${computedStyle.getPropertyValue('--elevation-1')})`;
 		this.hover1Color = `rgb(${computedStyle.getPropertyValue('--hover-1')})`;
@@ -78,6 +83,7 @@ export class RenderedGraph {
 		this.domElementColor = `rgb(${computedStyle.getPropertyValue('--dom-element')})`;
 
 		this.onGraphChange();
+		this.checkHover();
 
 		ctx.resetTransform();
 
@@ -87,6 +93,7 @@ export class RenderedGraph {
 		ctx.translate(this.originX, this.originY);
 		ctx.scale(get(this.scale), get(this.scale));
 
+		// First, draw all edges so they're below the nodes
 		for (let i = 0; i < this.renderedEdges.length; i++) {
 			const edge = this.renderedEdges[i];
 			if (edge.visibility.target === 0 && edge.visibility.value === 0) {
@@ -96,6 +103,7 @@ export class RenderedGraph {
 			this.drawEdge(edge);
 		}
 
+		// Then, draw the nodes
 		for (let i = 0; i < this.renderedNodes.length; i++) {
 			const node = this.renderedNodes[i];
 			if (node.exitCompletion.target === 1 && node.exitCompletion.value === 1) {
@@ -104,8 +112,6 @@ export class RenderedGraph {
 			}
 			this.drawNode(node);
 		}
-
-		this.checkHover();
 	}
 
 	drawNode(node: RenderedNode) {
@@ -124,6 +130,7 @@ export class RenderedGraph {
 				node.lastRenderedValue = null;
 			} else {
 				if (node.lastRenderedValue && node.lastRenderedValue !== value) {
+					// Create a pulse effect whenever the value changes
 					node.valueChangeCompletion.set(0);
 					node.valueChangeCompletion.target = 1;
 				}
@@ -149,6 +156,8 @@ export class RenderedGraph {
 			ctx.stroke();
 
 			if (node.valueChangeCompletion.value < 1) {
+				// Draw a highlighted border over the original one
+
 				ctx.save();
 				ctx.strokeStyle = this.highlight1Color;
 				ctx.lineWidth = 8;
@@ -160,12 +169,14 @@ export class RenderedGraph {
 			ctx.fillStyle = this.elevation1Color;
 			ctx.fill();
 
+			// Draw the main text
 			ctx.textAlign = 'center';
 			ctx.font = '14px sans-serif';
 			ctx.textBaseline = 'middle';
 			ctx.fillStyle = this.textColor;
 			ctx.fillText(node.layoutNode.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
 
+			// Draw the value text
 			if (value) {
 				if (value.type === 'boolean') ctx.fillStyle = this.booleanColor;
 				else if (value.type === 'number') ctx.fillStyle = this.numberColor;
@@ -222,15 +233,16 @@ export class RenderedGraph {
 		ctx.lineJoin = 'round';
 		ctx.stroke();
 
-		const clean1 = getPositionAlongPath(path, visibility);
-		const clean2 = getPositionAlongPath(path, Math.max(visibility - 1e-6, 0));
+		const endPos = getPositionAlongPath(path, visibility);
+		const rightBeforeEndPos = getPositionAlongPath(path, Math.max(visibility - 1e-6, 0));
 
+		// Estimated derivative
 		const angle = Math.atan2(
-			clean1.y - clean2.y,
-			clean1.x - clean2.x
+			endPos.y - rightBeforeEndPos.y,
+			endPos.x - rightBeforeEndPos.x
 		);
 
-		this.drawArrow(clean1.x, clean1.y, angle);
+		this.drawArrow(endPos.x, endPos.y, angle);
 
 		ctx.globalAlpha = 1;
 	}
@@ -239,6 +251,7 @@ export class RenderedGraph {
 		const { ctx } = this;
 
 		ctx.save();
+
 		ctx.translate(endX, endY);
 		ctx.rotate(endAngle);
 
@@ -254,6 +267,7 @@ export class RenderedGraph {
 	onGraphChange() {
 		if (!this.graphHasChanged) return;
 
+		// Keep the path structure in sync with the graph (but never remove, only add)
 		const paths = this.graph.nodes.map(x => x.reScalaResource.path);
 		for (const path of paths) {
 			let node = get(this.pathStructureRoot);
@@ -270,6 +284,7 @@ export class RenderedGraph {
 
 		const shouldCenter = this.layout.nodes.length > 0 && !this.hasCenteredOnce;
 		if (shouldCenter) {
+			// Visually center the graph the first time we see it
 			this.center();
 			this.hasCenteredOnce = true;
 		}
@@ -284,11 +299,15 @@ export class RenderedGraph {
 		const hitNodes = new Set<RenderedNode>();
 		const hitEdges = new Set<RenderedEdge>();
 
+		// Keep the nodes in sync
 		for (const layoutNode of this.layout.nodes) {
-			let node = this.renderedNodes.find(x =>
-				x.layoutNode === layoutNode
-				|| (x.layoutNode.node && x.layoutNode.node.id === layoutNode.node?.id)
-			);
+			// Find the layout node corresponding to this rendered node
+			let node = this.layoutToRenderedNode.get(layoutNode)
+				?? this.renderedNodes.find(x =>
+					// Having the same underlying GraphNode also counts as a match
+					x.layoutNode.node && x.layoutNode.node.id === layoutNode.node?.id
+				);
+
 			if (!node) {
 				node = new RenderedNode(layoutNode, this);
 				this.renderedNodes.push(node);
@@ -301,6 +320,7 @@ export class RenderedGraph {
 			hitNodes.add(node);
 		}
 
+		// Construct the edges
 		for (const node of this.renderedNodes) {
 			if (node.layoutNode.isDummy) continue;
 
@@ -308,6 +328,7 @@ export class RenderedGraph {
 				let current = child;
 				const waypoints = [node];
 
+				// Construct a single, long edge for one that goes through dummy nodes
 				while (current.layoutNode.isDummy) {
 					waypoints.push(current);
 					current = current.out[0];
@@ -330,6 +351,7 @@ export class RenderedGraph {
 			}
 		}
 
+		// Fade out removed edges
 		for (const edge of this.renderedEdges) {
 			if (hitEdges.has(edge)) continue;
 
@@ -337,6 +359,7 @@ export class RenderedGraph {
 			edge.tweenedPath.target = edge.computePath(Infinity);
 		}
 
+		// Fade out removed nodes
 		for (const node of this.renderedNodes) {
 			if (hitNodes.has(node)) continue;
 
@@ -352,32 +375,6 @@ export class RenderedGraph {
 
 	supplyMousePosition(position: Point) {
 		this.mousePosition = position;
-	}
-
-	getNodesOverlappingWithMouse() {
-		const nodes: RenderedNode[] = [];
-		const mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
-		const mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
-
-		for (const node of this.renderedNodes) {
-			if (node.layoutNode.isDummy) continue;
-
-			const minPos = node.visualPosition();
-			const maxPos = structuredClone(minPos);
-			maxPos.x += NODE_WIDTH;
-			maxPos.y += NODE_HEIGHT;
-
-			if (
-				mouseX >= minPos.x
-                && mouseX < maxPos.x
-                && mouseY >= minPos.y
-                && mouseY < maxPos.y
-			) {
-				nodes.push(node);
-			}
-		}
-
-		return nodes;
 	}
 
 	checkHover() {
@@ -397,6 +394,35 @@ export class RenderedGraph {
 		this.computeSelectedNodeSubtree();
 	}
 
+	getNodesOverlappingWithMouse() {
+		const nodes: RenderedNode[] = [];
+		const mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
+		const mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
+
+		for (const node of this.renderedNodes) {
+			if (node.layoutNode.isDummy) continue;
+
+			const minPos = node.visualPosition();
+			const maxPos = structuredClone(minPos);
+			maxPos.x += NODE_WIDTH;
+			maxPos.y += NODE_HEIGHT;
+
+			if (
+				mouseX >= minPos.x
+				&& mouseX < maxPos.x
+				&& mouseY >= minPos.y
+				&& mouseY < maxPos.y
+			) {
+				nodes.push(node);
+			}
+		}
+
+		return nodes;
+	}
+
+	/**
+	 * The selected node subtree is comprised of the selected node, all of its ancestors and all of its descendants.
+	 */
 	computeSelectedNodeSubtree() {
 		const node = get(this.selectedNode);
 		if (!node) return;
@@ -417,6 +443,7 @@ export class RenderedGraph {
 		}
 	}
 
+	/** Centers the entire visible graph. */
 	center() {
 		let minX = Infinity;
 		let minY = Infinity;

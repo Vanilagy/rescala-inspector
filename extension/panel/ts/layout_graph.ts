@@ -7,7 +7,9 @@ const DUMMY_NODE_HEIGHT_FACTOR = 1/3;
 
 export class LayoutNode {
 	layer = 0;
+	/** The position of the node in each layer. */
 	x = 0;
+	/** The last computed acceleration (force) for this node. */
 	a: number;
 	in: LayoutNode[] = [];
 	out: LayoutNode[] = [];
@@ -16,6 +18,10 @@ export class LayoutNode {
 
 	constructor(public node?: GraphNode) {}
 
+	/**
+	 * Dummy nodes are inserted whenever there are edges in the original graph with span of 2 or higher.
+	 * This way, we'll be able to draw long edges nicely by drawing a spline through all of the dummy nodes.
+	 */
 	get isDummy() {
 		return !this.node;
 	}
@@ -37,6 +43,7 @@ export class LayoutEdge extends Array<LayoutNode> {
 	}
 }
 
+/** Class concerned with the spatial layout of a graph. */
 export class LayoutGraph {
 	nodes: LayoutNode[] = [];
 	edges: LayoutEdge[] = [];
@@ -64,29 +71,16 @@ export class LayoutGraph {
 		remove(edge[1].in, edge[0]);
 	}
 
-	layOut() {
-		if (this.nodes.length === 0) return;
-
-		this.assignLayers();
-		this.createDummyNodes();
-		this.assignComponents();
-		this.decross();
-		this.solve();
-	}
-
-	pathIsShown(node: PathStructureNode, path: string[]) {
-		if (!node.shown) return false;
-		const child = node.children.find(x => x.label === path[0]);
-		if (!child) return true;
-		return this.pathIsShown(child, path.slice(1));
-	}
-
+	/** Sync this graph's nodes and edges with the parent graph. */
 	reconcile() {
 		const { nodes, edges } = this.renderedGraph.graph;
 
+		// Filter out nodes that have been deselected in the structure UI
 		const shownNodes = nodes.filter(x =>
 			this.pathIsShown(get(this.renderedGraph.pathStructureRoot), x.reScalaResource.path.slice(0, -1))
 		);
+
+		// Sync the nodes
 		for (const node of shownNodes) {
 			if (this.nodes.some(x => x.node === node)) continue;
 			const layoutNode = new LayoutNode(node);
@@ -97,10 +91,13 @@ export class LayoutGraph {
 			this.removeNode(node);
 		}
 
+		// Remove all edges
 		for (const edge of [...this.edges]) this.removeEdge(edge);
 
 		for (const node of shownNodes) {
 			const outgoingEdges = edges.filter(x => x[0] === node);
+
+			// Refine the outgoing edges if some nodes are hidden
 			while (true) {
 				let changed = false;
 
@@ -126,6 +123,33 @@ export class LayoutGraph {
 		}
 	}
 
+	/** Recursive function to query the path structure. */
+	pathIsShown(node: PathStructureNode, path: string[]) {
+		if (!node.shown) return false;
+		const child = node.children.find(x => x.label === path[0]);
+		if (!child) return true;
+
+		return this.pathIsShown(child, path.slice(1));
+	}
+
+	layOut() {
+		if (this.nodes.length === 0) return;
+
+		this.assignLayers();
+		this.createDummyNodes();
+		this.assignComponents();
+		this.decross();
+		this.solve();
+	}
+
+	/**
+	 * Function which assigns each node a _layer_, i.e. its horizontal position. It assigns the layers such that these
+	 * properties are met:
+	 *
+	 * 1. There exists at least one node n with layer(n) = 0.
+	 * 2. If n->m, then layer(n) > layer(m).
+	 * 3. The sum of all edge spans is minimal.
+	 */
 	assignLayers() {
 		const longestOutgoingPathCache = new Map<LayoutNode, number>();
 		const longestOutgoingPath = (node: LayoutNode) => {
@@ -138,9 +162,11 @@ export class LayoutGraph {
 			longestOutgoingPathCache.set(node, res);
 			return res;
 		};
+
+		// Assigning each node a layer based on its longest outgoing path already ensures properites 1 and 2.
 		for (const node of this.nodes) node.layer = longestOutgoingPath(node);
 
-		// See if long edges can be shortened
+		// To ensure property 3, see if long edges can be shortened
 		const done = new Set<LayoutEdge>();
 		while (true) {
 			const nextEdge = this.edges
@@ -173,6 +199,7 @@ export class LayoutGraph {
 				const newMaxLayer = Math.max(...parents.map(x => x.layer));
 
 				if (computeConnectedEdgeLength() > len || newMaxLayer > maxLayer) {
+					// Reset
 					parents.forEach((x, i) => x.layer = before[i]);
 					node.layer--;
 
@@ -184,8 +211,8 @@ export class LayoutGraph {
 		}
 	}
 
+	/** Adds dummy nodes for long edges. */
 	createDummyNodes() {
-		// Add dummy nodes for long edges
 		for (let j = 0; j < this.edges.length; j++) {
 			const edge = this.edges[j];
 			if (edge.span <= 1) continue;
@@ -208,6 +235,9 @@ export class LayoutGraph {
 		}
 	}
 
+	/**
+	 * Assign component to each node, such that nodes part of the same connected component have the same component ID.
+	 */
 	assignComponents() {
 		for (const node of this.nodes) node.component = null;
 
@@ -221,6 +251,7 @@ export class LayoutGraph {
 		this.nodes.filter(x => x.in.length === 0).forEach(computeComponent);
 	}
 
+	/** Sets the neighbor for each node, i.e. the node in the same layer that is below it. */
 	computeNeighbors() {
 		for (const node of this.nodes) node.neighbor = null;
 
@@ -235,6 +266,7 @@ export class LayoutGraph {
 		return sortedNodes;
 	}
 
+	/** Spreads out the nodes accordinging to their position within each layer. */
 	spreadOut(factor = 1) {
 		const highestLayer = Math.max(...this.nodes.map(x => x.layer));
 		for (let layer = 0; layer <= highestLayer; layer++) {
@@ -246,6 +278,10 @@ export class LayoutGraph {
 		}
 	}
 
+	/**
+	 * Heuristically decrosses the nodes, i.e. tries to find a node order for each layer such that the number of edge
+	 * crossings is minimized. This function uses a force-based decrossing approach.
+	 * */
 	decross() {
 		let last: LayoutNode[] = null;
 
@@ -253,101 +289,38 @@ export class LayoutGraph {
 		this.spreadOut();
 
 		for (let j = 0; j < 10; j++) {
+			// Perform a couple of iterations of the force layout, with collisions disabled. This way, children will
+			// tend towards their parents and vice versa, leading to a mostly decrossed layout.
 			this.solve(true, 50);
+
 			const sortedNodes = this.computeNeighbors();
+			// Spread them out again since solving the layout for too long will make every node tend towards 0
 			this.spreadOut();
 
-			if (last && last.every((n, i) => n === sortedNodes[i])) break;
+			if (last && last.every((n, i) => n === sortedNodes[i])) break; // Break if the order hasn't changed
 
 			last = sortedNodes;
 		}
 	}
 
-	computeForces(noCollision: boolean) {
-		for (const node of this.nodes) node.a = 0;
-		for (const edge of this.edges) {
-			let force = (edge[0].x + edge[0].height/2) - (edge[1].x + edge[1].height/2);
-			if (noCollision) force = edge[0].x - edge[1].x;
-
-			edge[0].a -= force / 2;
-			edge[1].a += force / 2;
-		}
-
-		if (noCollision) return;
-
-		for (const node of this.nodes) {
-			if (!node.neighbor) continue;
-
-			// Spring force between nodes of the same layer
-			const dist = node.neighbor.x - (node.x + node.height);
-			const wanted = 1;
-			const delta = Math.max(wanted - dist, 0);
-
-			const force = 0.5 * delta;
-			node.a -= force;
-			node.neighbor.a += force;
-		}
-
-		const did = new Set<LayoutNode>();
-		for (const node of this.nodes) {
-			if (did.has(node)) continue;
-
-			const connected = [node];
-			while (
-				connected.at(-1).neighbor &&
-                connected.at(-1).neighbor.x - (connected.at(-1).x + connected.at(-1).height + 1e-6) <= 0
-			) {
-				connected.push(connected.at(-1).neighbor);
-			}
-
-			connected.forEach(x => did.add(x));
-			if (connected.length === 1) continue;
-
-			// Need to do it twice, otherwise there was a little bit of constant translation over time
-			for (let $ = 0; $ < 2; $++) for (let d = 1; d >= -1; d -= 2) {
-				let currentSum = 0;
-				let currentStart = d === 1 ? 0 : connected.length-1;
-				const end = connected.length-1 - currentStart;
-
-				for (
-					let i = currentStart;
-					d*i <= d*end;
-					i += d
-				) {
-					currentSum += connected[i].a;
-					const currentAvg = currentSum / (d*(i-currentStart) + 1);
-
-					if (i === end || d*currentAvg < d*connected[i + d].a - 1e-6) {
-						for (let j = currentStart; d*j <= d*i; j += d) {
-							connected[j].a = currentAvg;
-						}
-						currentSum = 0;
-						currentStart = i + d;
-					}
-				}
-			}
-
-			for (const n of connected.slice(0, -1)) {
-				const force = 0.25 * Math.min(n.neighbor.x - (n.x + n.height), 0);
-
-				for (const m of connected) {
-					const sign = connected.indexOf(m) <= connected.indexOf(n) ? 1 : -1;
-					m.a += sign * force;
-				}
-			}
-		}
-	}
-
+	/** Solves the force-based graph layout, i.e. tries to find a point of convergence. */
 	solve(noCollision = false, iters?: number) {
-		let lastAccel: number;
 		const startingH = 0.3;
+		const eps = 0.01;
 		let h = startingH;
+		let lastAccel: number;
 
 		for (let i = 0; i < (iters ?? 500); i++) {
 			this.computeForces(noCollision);
 
+			// Execute one iteration of Euler's method for solving differential equations.
+			// Note that we use the acceleration here as if it were velocity, which really is fine. If we correctly
+			// simulated velocity accumulated by the springs, our graph would oscillate forever and we'd need to include
+			// dampening constants and such. Doing it this way is just simpler.
 			this.nodes.forEach(n => n.x += h * n.a);
 
+			// Based on the change in acceleration, adjust the step size for next time for
+			// faster convergence / preventing divergence.
 			const maxAccel = Math.max(...this.nodes.map(n => Math.abs(n.a)));
 			if (lastAccel) {
 				if (maxAccel < lastAccel * 1.1) {
@@ -362,8 +335,99 @@ export class LayoutGraph {
 			}
 			lastAccel = maxAccel;
 
-			if (iters === undefined && maxAccel < 0.01) {
+			// If there is barely any force left in the system, consider it solved
+			if (iters === undefined && maxAccel < eps) {
 				break;
+			}
+		}
+	}
+
+	/** Computes the forces acting on every node in the graph. */
+	computeForces(noCollision: boolean) {
+		for (const node of this.nodes) node.a = 0;
+
+		// For each edge, add a force proportional to the distance between parent and child
+		for (const edge of this.edges) {
+			let force = (edge[0].x + edge[0].height/2) - (edge[1].x + edge[1].height/2);
+			if (noCollision) force = edge[0].x - edge[1].x;
+
+			edge[0].a -= force / 2;
+			edge[1].a += force / 2;
+		}
+
+		if (noCollision) return;
+
+		// Apply a spring force between nodes of the same layer if they are too close. This will space out the layout
+		// and ensure connected components have visible space between them.
+		for (const node of this.nodes) {
+			if (!node.neighbor) continue;
+			const dist = node.neighbor.x - (node.x + node.height);
+			const wanted = 1;
+			const delta = Math.max(wanted - dist, 0);
+
+			const force = 0.5 * delta;
+			node.a -= force;
+			node.neighbor.a += force;
+		}
+
+		// Process collision of nodes
+		const did = new Set<LayoutNode>();
+		for (const node of this.nodes) {
+			if (did.has(node)) continue;
+
+			// Find the longest chain of consecutive overlapping/touching nodes, which we'll process together
+			const connected = [node];
+			while (
+				connected.at(-1).neighbor &&
+                connected.at(-1).neighbor.x - (connected.at(-1).x + connected.at(-1).height + 1e-6) <= 0
+			) {
+				connected.push(connected.at(-1).neighbor);
+			}
+
+			connected.forEach(x => did.add(x));
+			if (connected.length === 1) continue;
+
+			// Now we want to share forces between overlapping nodes, e.g. if the top node is being pulled on, it
+			// distributes that force to all the other nodes below it.
+
+			// Need to do it twice, otherwise there was a little bit of constant translation over time
+			for (let n = 0; n < 2; n++) {
+				// Go down and then up
+				for (let d = 1; d >= -1; d -= 2) {
+					let currentSum = 0;
+					let currentStart = d === 1 ? 0 : connected.length-1;
+					const end = connected.length-1 - currentStart;
+
+					for (
+						let i = currentStart;
+						d*i <= d*end;
+						i += d
+					) {
+						currentSum += connected[i].a;
+						const currentAvg = currentSum / (d*(i-currentStart) + 1);
+
+						// If we've reached the end or the current accumulated force is less than the next node's force,
+						// meaning the nodes are in the process of separating, draw a cut and apply the average force
+						// to each node.
+						if (i === end || d*currentAvg < d*connected[i + d].a - 1e-6) {
+							for (let j = currentStart; d*j <= d*i; j += d) {
+								connected[j].a = currentAvg;
+							}
+							currentSum = 0;
+							currentStart = i + d;
+						}
+					}
+				}
+			}
+
+			// Finally, add a force to intersecting nodes that pushes them apart.
+			for (const n of connected.slice(0, -1)) {
+				const force = 0.25 * Math.min(n.neighbor.x - (n.x + n.height), 0);
+
+				for (const m of connected) {
+					const sign = connected.indexOf(m) <= connected.indexOf(n) ? 1 : -1;
+					m.a += sign * force;
+				}
 			}
 		}
 	}

@@ -11,6 +11,8 @@ export class RenderedNode {
 		lerpPoints,
 		EaseType.EaseOutElasticQuarter
 	);
+
+	// Separate entry and exit completions as they have different animations
 	entryCompletion = new Tweened(
 		0,
 		animationDuration,
@@ -23,6 +25,7 @@ export class RenderedNode {
 		lerp,
 		EaseType.EaseOutQuint
 	);
+
 	valueChangeCompletion = new Tweened(
 		1,
 		() => 0.75 * animationDuration(),
@@ -31,7 +34,7 @@ export class RenderedNode {
 	lastRenderedValue: ReScalaValue = null;
 
 	constructor(public layoutNode: LayoutNode, public renderedGraph: RenderedGraph) {
-		this.entryCompletion.target = 1;
+		this.entryCompletion.target = 1; // Fade in
 	}
 
 	get in() {
@@ -42,6 +45,7 @@ export class RenderedNode {
 		return this.layoutNode.out.map(x => this.renderedGraph.layoutToRenderedNode.get(x));
 	}
 
+	/** Computes the screen coordinates of the top-left corner of the node. */
 	computePosition(center = false): Point {
 		const x = 350 * -this.layoutNode.layer;
 		const y = 100 * this.layoutNode.x;
@@ -55,6 +59,7 @@ export class RenderedNode {
 		return pos;
 	}
 
+	/** Computes the animated screen coordinates of the top-left corner of the node. */
 	visualPosition(time?: number) {
 		const actualPosition = this.computePosition();
 		if (
@@ -62,6 +67,7 @@ export class RenderedNode {
 			|| this.tweenedPosition.target.x !== actualPosition.x
 			|| this.tweenedPosition.target.y !== actualPosition.y
 		) {
+			// Update the tweened variable if the position has changed
 			this.tweenedPosition.target = actualPosition;
 		}
 
@@ -85,29 +91,23 @@ export class RenderedNode {
 		return pos;
 	}
 
+	// Find the position on the border of the node based on an angle, from the center of the node
 	posOnBorder(angle: number, time?: number) {
 		const { x: centerX, y: centerY } = this.visualCenter(time);
 
 		const margin = 7;
-		const extendedWidth = NODE_WIDTH/2 + margin;
-		const extendedHeight = NODE_HEIGHT/2 + margin;
+		const extendedWidth = NODE_WIDTH / 2 + margin;
+		const extendedHeight = NODE_HEIGHT / 2 + margin;
 
-		let x = Math.cos(angle) * extendedWidth;
-		let y = Math.sin(angle) * extendedHeight;
+		const aspectRatio = extendedHeight / extendedWidth;
 
-		if (Math.abs(Math.tan(angle)) < 1) { // equiv to Math.abs(Math.cos(angle)) < Math.abs(Math.tan(angle))
-			const fac = extendedWidth / Math.abs(x);
-			x *= fac;
-			y *= fac;
-		} else {
-			const fac = extendedHeight / Math.abs(y);
-			x *= fac;
-			y *= fac;
-		}
+		const x = Math.cos(angle);
+		const y = Math.sin(angle);
 
-		return {
-			x: centerX + x,
-			y: centerY + y
-		};
+		const t = Math.abs(x * aspectRatio) > Math.abs(y) ? Math.abs(extendedWidth / x) : Math.abs(extendedHeight / y);
+		const borderX = centerX + x * t;
+		const borderY = centerY + y * t;
+
+		return { x: borderX, y: borderY };
 	}
 }

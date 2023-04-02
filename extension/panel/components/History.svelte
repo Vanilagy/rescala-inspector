@@ -23,11 +23,13 @@
 	const setGroupingMode = async (mode: string) => {
 		selectedGroupingMode = mode as keyof typeof GROUPING_MODES;
 
-		await tick();
+		await tick(); // Wait for Svelte to catch up
+	
 		let group = groups[currentGroupIndex];
 		renderedGraph.graph.setHistoryIndex($history.indexOf(group.at(-1)));
 	};
 
+	/** Formats the changes of a group of REScala events. */
 	const formattedDiff = (group: ReScalaEvent[]) => {
 		let output = '';
 
@@ -57,10 +59,11 @@
 		renderedGraph.graph.setHistoryIndex(nextHistoryIndex);
 	};
 
+	/** Svelte action to scroll a history entry into view when its selected.  */
 	const scrollIntoView = (node: HTMLElement, group: ReScalaEvent[]) => {
 		let unsubscribe = currentHistoryIndex.subscribe(x => {
 			let event = $history[x];
-			if (group.includes(event) /*|| (x === -1 && group.length === 0)*/) {
+			if (group.includes(event) || (x === -1 && group.length === 0)) {
 				node.scrollIntoView({ inline: 'nearest' });
 			}
 		});
@@ -84,7 +87,8 @@
 		class:!border-b-0={historyShown}
 	>
 		<button
-			class="group w-56 text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-hover-1 box-content border-r border-border-1"
+			class="group w-56 text-left text-xs font-medium flex items-center py-1 px-3 cursor-pointer hover:bg-hover-1
+				box-content border-r border-border-1"
 			on:click={() => historyShown = !historyShown}
 		>
 			<p class="flex-1 opacity-60 group-hover:opacity-100">History</p>
@@ -109,13 +113,15 @@
 
 	{#if historyShown}
 		<div
-			class="pointer-events-auto w-full bg-elevation-1 rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3 border border-border-1"
+			class="pointer-events-auto w-full bg-elevation-1 rounded-b-md h-28 overflow-x-auto rounded-tr-md p-3
+				border border-border-1"
 			on:keydown={e => e.code.startsWith('Arrow') && e.preventDefault()}
 		>
 			<div class="flex items-center h-6 box-content">
 				{#each groups as group, i}
 					<button
-						class="shrink-0 bg-elevation-2 w-4 h-4 rounded-full shadow z-10 hover:h-6 transition-all scroll-mx-4 {currentGroupIndex === i && 'bg-highlight-1 h-6'}"
+						class="shrink-0 bg-elevation-2 w-4 h-4 rounded-full shadow z-10 hover:h-6 transition-all scroll-mx-4
+						{currentGroupIndex === i && 'bg-highlight-1 h-6'}"
 						on:click={() => renderedGraph.graph.setHistoryIndex($history.indexOf(group.at(-1)))}
 						use:scrollIntoView={group}
 					/>

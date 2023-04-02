@@ -33,6 +33,7 @@ export type ReScalaEvent = ({
 	batch: number
 };
 
+/** Splits up a single REScala resource path into an array. */
 export const extractPathFromReScalaResource = (resource: ReScalaResource) => {
 	const path: string[] = [];
 	const namespaceSegment = resource.enclosing.slice(0, resource.enclosing.indexOf('#'));
@@ -44,6 +45,7 @@ export const extractPathFromReScalaResource = (resource: ReScalaResource) => {
 	return path;
 };
 
+/** Wrapper to describe a REScala value. */
 export interface ReScalaValue {
 	raw: string,
 	type: 'boolean' | 'number' | 'string' | 'instance' | 'list' | 'dom-element' | 'unknown',
@@ -53,6 +55,7 @@ export interface ReScalaValue {
 
 export const parseReScalaValue = (value: string): ReScalaValue => {
 	const formatted = formatValue(value);
+
 	let type: ReScalaValue['type'] = 'unknown';
 	let short = value;
 
@@ -82,6 +85,7 @@ export const parseReScalaValue = (value: string): ReScalaValue => {
 	};
 };
 
+/** Given a REScala value, formats it into pretty-printed HTML. */
 const formatValue = (value: string) => {
 	if (!value) return null;
 
@@ -95,6 +99,8 @@ const formatValue = (value: string) => {
 		// It's a string
 		return `<span class="text-string">${escape(value)}</span>`;
 	} else if (/^(\w\.?)+\(/.test(value)) {
+		// It's a complex data type
+
 		const process = (section: string) => {
 			const parts = split(section);
 
@@ -132,6 +138,7 @@ const escape = (string: string) => {
 	return div.innerHTML;
 };
 
+/** Splits the given string at every comma, while respecting parentheses and string literals. */
 const split = (string: string) => {
 	const parts: string[] = [];
 	let current = '';

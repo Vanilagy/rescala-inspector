@@ -43,6 +43,7 @@
 				if (!result.events) return;
 
 				if (lastId !== result.id) {
+					// If the random ID has changed, assume the inspected page has reloaded, so we'll need to as well
 					eventsProcessed = 0;
 					graph = new Graph();
 					renderedGraph = new RenderedGraph(graph, canvas);
@@ -61,6 +62,8 @@
 					events
 				};
 			};
+
+			// Regularly poll the inspected window for changes in the graph
 			setInterval(() => {
 				chrome.devtools.inspectedWindow.eval(`(${getData.toString()})()`, handle);
 			}, 1000/30);
@@ -91,6 +94,7 @@
 			scaleChange = MAX_SCALE / currentScale;
 		}
 
+		// Zoom into / out of the currently moused-over point
 		renderedGraph.originX = (renderedGraph.originX - e.clientX) * scaleChange + e.clientX;
 		renderedGraph.originY = (renderedGraph.originY - e.clientY) * scaleChange + e.clientY;
 		renderedGraph.scale.update(x => x * scaleChange);

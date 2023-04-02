@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { saturate } from '../ts/utils';
 	import Icon from '@iconify/svelte';
-	import { animationSpeedSetting } from '../ts/rendered_graph';
+	import { animationSpeedSetting, ANIMATION_SPEED_OPTIONS } from '../ts/rendered_graph';
 
 	let dragging = false;
 
-	$: completion = $animationSpeedSetting / 4;
+	$: completion = $animationSpeedSetting / (ANIMATION_SPEED_OPTIONS.length - 1);
 
 	let dragCompletion: number;
 	const drag = (e: PointerEvent) => {
@@ -13,7 +13,7 @@
 
 		dragCompletion += e.movementX / 80;
 
-		$animationSpeedSetting = Math.round(saturate(dragCompletion) * 4);
+		$animationSpeedSetting = Math.round(saturate(dragCompletion) * (ANIMATION_SPEED_OPTIONS.length - 1));
 	};
 </script>
 
