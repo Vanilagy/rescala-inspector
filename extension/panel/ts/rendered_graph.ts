@@ -1,11 +1,11 @@
-import { subscribe } from "svelte/internal";
-import { get, writable } from "svelte/store";
-import type { Graph } from "./graph";
-import { LayoutGraph, LayoutNode } from "./layout_graph";
-import { RenderedEdge } from "./rendered_edge";
-import { RenderedNode } from "./rendered_node";
-import { ease, EaseType, Tweened } from "./tween";
-import { catmullRom, clamp, getPositionAlongPath, lerp, lerpPoints, quadraticBezier, roundedRect, type Path, type Point } from "./utils";
+import { subscribe } from 'svelte/internal';
+import { get, writable } from 'svelte/store';
+import type { Graph } from './graph';
+import { LayoutGraph, LayoutNode } from './layout_graph';
+import { RenderedEdge } from './rendered_edge';
+import { RenderedNode } from './rendered_node';
+import { ease, EaseType } from './tween';
+import { clamp, getPositionAlongPath, lerp, roundedRect, type Point } from './utils';
 
 export const NODE_WIDTH = 150;
 export const NODE_HEIGHT = 70;
@@ -18,430 +18,433 @@ export const animationDuration = () => [10000, 3000, 1000, 500, 0][get(animation
 export type PathStructureNode = { label: string, shown: boolean, children: PathStructureNode[] };
 
 export class RenderedGraph {
-    ctx: CanvasRenderingContext2D;
-    originX = 0
-    originY = 0;
-    scale = writable(0.5);
-    showNodeBoundingBoxes = false;
-    layout: LayoutGraph;
-    renderedNodes: RenderedNode[] = [];
-    renderedEdges: RenderedEdge[] = [];
-    layoutToRenderedNode = new WeakMap<LayoutNode, RenderedNode>();
-    graphHasChanged = true;
-    hoveredNode = writable<RenderedNode>(null);
-    selectedNode = writable<RenderedNode>(null);
-    selectedNodeSubtree = new WeakSet<RenderedNode>();
-    mousePosition: Point = { x: 0, y: 0 };
-    pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
-    hasCenteredOnce = false;
+	ctx: CanvasRenderingContext2D;
+	originX = 0;
+	originY = 0;
+	scale = writable(0.5);
+	showNodeBoundingBoxes = false;
+	layout: LayoutGraph;
+	renderedNodes: RenderedNode[] = [];
+	renderedEdges: RenderedEdge[] = [];
+	layoutToRenderedNode = new WeakMap<LayoutNode, RenderedNode>();
+	graphHasChanged = true;
+	hoveredNode = writable<RenderedNode>(null);
+	selectedNode = writable<RenderedNode>(null);
+	selectedNodeSubtree = new WeakSet<RenderedNode>();
+	mousePosition: Point = { x: 0, y: 0 };
+	pathStructureRoot = writable<PathStructureNode>({ label: 'root', shown: true, children: [] });
+	hasCenteredOnce = false;
 
-    elevation1Color: string;
-    hover1Color: string;
-    hoverStrongColor: string;
-    border1Color: string;
-    highlight1Color: string;
-    textColor: string;
-    booleanColor: string;
-    numberColor: string;
-    stringColor: string;
-    instanceColor: string;
-    listColor: string;
-    domElementColor: string;
+	elevation1Color: string;
+	hover1Color: string;
+	hoverStrongColor: string;
+	border1Color: string;
+	highlight1Color: string;
+	textColor: string;
+	booleanColor: string;
+	numberColor: string;
+	stringColor: string;
+	instanceColor: string;
+	listColor: string;
+	domElementColor: string;
 
-    constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
-        graph.on('change', () => this.graphHasChanged = true);
+	constructor(public graph: Graph, public canvas: HTMLCanvasElement) {
+		graph.on('change', () => this.graphHasChanged = true);
 
-        this.ctx = canvas.getContext('2d');
-        this.layout = new LayoutGraph(this);
+		this.ctx = canvas.getContext('2d');
+		this.layout = new LayoutGraph(this);
 
-        subscribe(this.pathStructureRoot, () => {
-            if (this.graphHasChanged) return; // Because we'll reconcile anyway
-            this.reconcile();
-        });
-    }
-    
-    render() {
-        let { ctx } = this;
+		subscribe(this.pathStructureRoot, () => {
+			if (this.graphHasChanged) return; // Because we'll reconcile anyway
+			this.reconcile();
+		});
+	}
 
-        let computedStyle = getComputedStyle(document.body);
-        this.elevation1Color = `rgb(${computedStyle.getPropertyValue('--elevation-1')})`;
-        this.hover1Color = `rgb(${computedStyle.getPropertyValue('--hover-1')})`;
-        this.hoverStrongColor = `rgb(${computedStyle.getPropertyValue('--hover-strong')})`;
-        this.border1Color = `rgb(${computedStyle.getPropertyValue('--border-1')})`;
-        this.highlight1Color = `rgb(${computedStyle.getPropertyValue('--highlight-1')})`;
-        this.textColor = computedStyle.getPropertyValue('color');
-        this.booleanColor = `rgb(${computedStyle.getPropertyValue('--boolean')})`;
-        this.numberColor = `rgb(${computedStyle.getPropertyValue('--number')})`;
-        this.stringColor = `rgb(${computedStyle.getPropertyValue('--string')})`;
-        this.instanceColor = `rgb(${computedStyle.getPropertyValue('--instance')})`;
-        this.listColor = `rgb(${computedStyle.getPropertyValue('--list')})`;
-        this.domElementColor = `rgb(${computedStyle.getPropertyValue('--dom-element')})`;
+	render() {
+		const { ctx } = this;
 
-        this.onGraphChange();
+		const computedStyle = getComputedStyle(document.body);
+		this.elevation1Color = `rgb(${computedStyle.getPropertyValue('--elevation-1')})`;
+		this.hover1Color = `rgb(${computedStyle.getPropertyValue('--hover-1')})`;
+		this.hoverStrongColor = `rgb(${computedStyle.getPropertyValue('--hover-strong')})`;
+		this.border1Color = `rgb(${computedStyle.getPropertyValue('--border-1')})`;
+		this.highlight1Color = `rgb(${computedStyle.getPropertyValue('--highlight-1')})`;
+		this.textColor = computedStyle.getPropertyValue('color');
+		this.booleanColor = `rgb(${computedStyle.getPropertyValue('--boolean')})`;
+		this.numberColor = `rgb(${computedStyle.getPropertyValue('--number')})`;
+		this.stringColor = `rgb(${computedStyle.getPropertyValue('--string')})`;
+		this.instanceColor = `rgb(${computedStyle.getPropertyValue('--instance')})`;
+		this.listColor = `rgb(${computedStyle.getPropertyValue('--list')})`;
+		this.domElementColor = `rgb(${computedStyle.getPropertyValue('--dom-element')})`;
 
-        ctx.resetTransform();
+		this.onGraphChange();
 
-        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        ctx.translate(this.originX, this.originY);
-        ctx.scale(get(this.scale), get(this.scale));
+		ctx.resetTransform();
 
-        for (let i = 0; i < this.renderedEdges.length; i++) {
-            let edge = this.renderedEdges[i];
-            if (edge.visibility.target === 0 && edge.visibility.value === 0) {
-                this.renderedEdges.splice(i--, 1);
-                continue;
-            }
-            this.drawEdge(edge);
-        }
+		ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        for (let i = 0; i < this.renderedNodes.length; i++) {
-            let node = this.renderedNodes[i];
-            if (node.exitCompletion.target === 1 && node.exitCompletion.value === 1) {
-                this.renderedNodes.splice(i--, 1);
-                continue;
-            }
-            this.drawNode(node);
-        }
+		ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+		ctx.translate(this.originX, this.originY);
+		ctx.scale(get(this.scale), get(this.scale));
 
-        this.checkHover();
-    }
+		for (let i = 0; i < this.renderedEdges.length; i++) {
+			const edge = this.renderedEdges[i];
+			if (edge.visibility.target === 0 && edge.visibility.value === 0) {
+				this.renderedEdges.splice(i--, 1);
+				continue;
+			}
+			this.drawEdge(edge);
+		}
 
-    drawNode(node: RenderedNode) {
-        let { ctx } = this;
-        let { x, y } = node.visualPosition();
+		for (let i = 0; i < this.renderedNodes.length; i++) {
+			const node = this.renderedNodes[i];
+			if (node.exitCompletion.target === 1 && node.exitCompletion.value === 1) {
+				this.renderedNodes.splice(i--, 1);
+				continue;
+			}
+			this.drawNode(node);
+		}
 
-        if (!node.layoutNode.isDummy) {
-            this.ctx.globalAlpha = node.entryCompletion.value;
+		this.checkHover();
+	}
 
-            if (this.nodeIsDimmed(node)) this.ctx.globalAlpha *= 0.15;
+	drawNode(node: RenderedNode) {
+		const { ctx } = this;
+		const { x, y } = node.visualPosition();
 
-            let label = node.layoutNode.node.label;
-            let value = node.layoutNode.node.value;
+		if (!node.layoutNode.isDummy) {
+			this.ctx.globalAlpha = node.entryCompletion.value;
 
-            if (node.exitCompletion.target === 1) {
-                node.lastRenderedValue = null;
-            } else {
-                if (node.lastRenderedValue && node.lastRenderedValue !== value) {
-                    node.valueChangeCompletion.set(0);
-                    node.valueChangeCompletion.target = 1;
-                }
-                node.lastRenderedValue = value;
-            }
+			if (this.nodeIsDimmed(node)) this.ctx.globalAlpha *= 0.15;
 
-            ctx.save();
+			const label = node.layoutNode.node.label;
+			const value = node.layoutNode.node.value;
 
-            let scale = lerp(1, 0.75, node.exitCompletion.value)
+			if (node.exitCompletion.target === 1) {
+				node.lastRenderedValue = null;
+			} else {
+				if (node.lastRenderedValue && node.lastRenderedValue !== value) {
+					node.valueChangeCompletion.set(0);
+					node.valueChangeCompletion.target = 1;
+				}
+				node.lastRenderedValue = value;
+			}
+
+			ctx.save();
+
+			const scale = lerp(1, 0.75, node.exitCompletion.value)
                 + lerp(0.2, 0, ease(node.valueChangeCompletion.value, EaseType.EaseOutQuint));
-            this.ctx.globalAlpha *= 1 - node.exitCompletion.value;
-            
-            ctx.translate(x + NODE_WIDTH/2, y + node.visualHeight()/2);
-            ctx.scale(scale, scale);
-            ctx.translate(-x - NODE_WIDTH/2, -y - node.visualHeight()/2);
+			this.ctx.globalAlpha *= 1 - node.exitCompletion.value;
 
-            roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
+			ctx.translate(x + NODE_WIDTH/2, y + node.visualHeight()/2);
+			ctx.scale(scale, scale);
+			ctx.translate(-x - NODE_WIDTH/2, -y - node.visualHeight()/2);
 
-            let highlighted = get(this.hoveredNode) === node || get(this.selectedNode) === node;
+			roundedRect(ctx, x, y, NODE_WIDTH, node.visualHeight(), 6);
 
-            ctx.strokeStyle = highlighted ? this.hoverStrongColor : this.border1Color;
-            ctx.lineWidth = 4;
-            ctx.stroke();
+			const highlighted = get(this.hoveredNode) === node || get(this.selectedNode) === node;
 
-            if (node.valueChangeCompletion.value < 1) {
-                ctx.save();
-                ctx.strokeStyle = this.highlight1Color;
-                ctx.lineWidth = 8;
-                ctx.globalAlpha *= 1 - ease(node.valueChangeCompletion.value, EaseType.EaseInQuad);
-                ctx.stroke();
-                ctx.restore();
-            }
+			ctx.strokeStyle = highlighted ? this.hoverStrongColor : this.border1Color;
+			ctx.lineWidth = 4;
+			ctx.stroke();
 
-            ctx.fillStyle = this.elevation1Color;
-            ctx.fill();
+			if (node.valueChangeCompletion.value < 1) {
+				ctx.save();
+				ctx.strokeStyle = this.highlight1Color;
+				ctx.lineWidth = 8;
+				ctx.globalAlpha *= 1 - ease(node.valueChangeCompletion.value, EaseType.EaseInQuad);
+				ctx.stroke();
+				ctx.restore();
+			}
 
-            ctx.textAlign = 'center';
-            ctx.font = '14px sans-serif';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = this.textColor;
-            ctx.fillText(node.layoutNode.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
+			ctx.fillStyle = this.elevation1Color;
+			ctx.fill();
 
-            if (value) {
-                if (value.type === 'boolean') ctx.fillStyle = this.booleanColor;
-                else if (value.type === 'number') ctx.fillStyle = this.numberColor;
-                else if (value.type === 'string') ctx.fillStyle = this.stringColor;
-                else if (value.type === 'instance') ctx.fillStyle = this.instanceColor;
-                else if (value.type === 'list') ctx.fillStyle = this.listColor;
-                else if (value.type === 'dom-element') ctx.fillStyle = this.domElementColor;
-                else if (value.type === 'unknown') ctx.globalAlpha *= 2/3;
+			ctx.textAlign = 'center';
+			ctx.font = '14px sans-serif';
+			ctx.textBaseline = 'middle';
+			ctx.fillStyle = this.textColor;
+			ctx.fillText(node.layoutNode.node.id + ' | ' + label, x + NODE_WIDTH/2, y + node.visualHeight()/2);
 
-                ctx.font = '10px monospace';
-                ctx.fillText(value.short, x+NODE_WIDTH/2, y + node.visualHeight() - 10);
-            }
-        }
+			if (value) {
+				if (value.type === 'boolean') ctx.fillStyle = this.booleanColor;
+				else if (value.type === 'number') ctx.fillStyle = this.numberColor;
+				else if (value.type === 'string') ctx.fillStyle = this.stringColor;
+				else if (value.type === 'instance') ctx.fillStyle = this.instanceColor;
+				else if (value.type === 'list') ctx.fillStyle = this.listColor;
+				else if (value.type === 'dom-element') ctx.fillStyle = this.domElementColor;
+				else if (value.type === 'unknown') ctx.globalAlpha *= 2/3;
 
-        ctx.restore();
+				ctx.font = '10px monospace';
+				ctx.fillText(value.short, x+NODE_WIDTH/2, y + node.visualHeight() - 10);
+			}
+		}
 
-        if (this.showNodeBoundingBoxes) {
-            ctx.globalAlpha = 0.2;
-            ctx.fillStyle = `hsl(${100 + 50 * this.renderedNodes.indexOf(node)}, 60%, 60%)`;
-            roundedRect(ctx, x, y, NODE_WIDTH, 100 * node.layoutNode.height, 6);
-            ctx.fill();
-        }
+		ctx.restore();
 
-        ctx.globalAlpha = 1;
-    }
+		if (this.showNodeBoundingBoxes) {
+			ctx.globalAlpha = 0.2;
+			ctx.fillStyle = `hsl(${100 + 50 * this.renderedNodes.indexOf(node)}, 60%, 60%)`;
+			roundedRect(ctx, x, y, NODE_WIDTH, 100 * node.layoutNode.height, 6);
+			ctx.fill();
+		}
 
-    nodeIsDimmed(node: RenderedNode) {
-        return get(this.selectedNode) && !this.selectedNodeSubtree.has(node);
-    }
+		ctx.globalAlpha = 1;
+	}
 
-    drawEdge(edge: RenderedEdge) {
-        let { ctx } = this;
+	nodeIsDimmed(node: RenderedNode) {
+		return get(this.selectedNode) && !this.selectedNodeSubtree.has(node);
+	}
 
-        let visibility = edge.visibility.value;
-        ctx.globalAlpha = visibility;
+	drawEdge(edge: RenderedEdge) {
+		const { ctx } = this;
 
-        if (this.nodeIsDimmed(edge[0]) || this.nodeIsDimmed(edge[1])) {
-            ctx.globalAlpha *= 0.15;
-        }
+		const visibility = edge.visibility.value;
+		ctx.globalAlpha = visibility;
 
-        let path = edge.tweenedPath.value;
+		if (this.nodeIsDimmed(edge[0]) || this.nodeIsDimmed(edge[1])) {
+			ctx.globalAlpha *= 0.15;
+		}
 
-        ctx.beginPath();
-        let len = Math.max(Math.ceil(path.length * visibility), 2);
-        for (let i = 0; i < len; i++) {
-            let { x, y } = getPositionAlongPath(path, visibility * i/(len-1));
+		const path = edge.tweenedPath.value;
 
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = `hsl(${100 + 50 * edge.id}, 60%, 60%)`;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
+		ctx.beginPath();
+		const len = Math.max(Math.ceil(path.length * visibility), 2);
+		for (let i = 0; i < len; i++) {
+			const { x, y } = getPositionAlongPath(path, visibility * i/(len-1));
 
-        let clean1 = getPositionAlongPath(path, visibility);
-        let clean2 = getPositionAlongPath(path, Math.max(visibility - 1e-6, 0));
+			if (i === 0) ctx.moveTo(x, y);
+			else ctx.lineTo(x, y);
+		}
+		ctx.lineWidth = 2;
+		ctx.strokeStyle = `hsl(${100 + 50 * edge.id}, 60%, 60%)`;
+		ctx.lineCap = 'round';
+		ctx.lineJoin = 'round';
+		ctx.stroke();
 
-        let angle = Math.atan2(
-            clean1.y - clean2.y,
-            clean1.x - clean2.x
-        );
+		const clean1 = getPositionAlongPath(path, visibility);
+		const clean2 = getPositionAlongPath(path, Math.max(visibility - 1e-6, 0));
 
-        this.drawArrow(clean1.x, clean1.y, angle);
+		const angle = Math.atan2(
+			clean1.y - clean2.y,
+			clean1.x - clean2.x
+		);
 
-        ctx.globalAlpha = 1;
-    }
+		this.drawArrow(clean1.x, clean1.y, angle);
 
-    drawArrow(endX: number, endY: number, endAngle: number) {
-        let { ctx } = this;
+		ctx.globalAlpha = 1;
+	}
 
-        ctx.save();
-        ctx.translate(endX, endY);
-        ctx.rotate(endAngle);
+	drawArrow(endX: number, endY: number, endAngle: number) {
+		const { ctx } = this;
 
-        ctx.beginPath();
-        ctx.moveTo(-7, -5);
-        ctx.lineTo(0, 0);
-        ctx.lineTo(-7, 5);
-        ctx.stroke();
+		ctx.save();
+		ctx.translate(endX, endY);
+		ctx.rotate(endAngle);
 
-        ctx.restore();
-    }
+		ctx.beginPath();
+		ctx.moveTo(-7, -5);
+		ctx.lineTo(0, 0);
+		ctx.lineTo(-7, 5);
+		ctx.stroke();
 
-    onGraphChange() {
-        if (!this.graphHasChanged) return;
+		ctx.restore();
+	}
 
-        let paths = this.graph.nodes.map(x => x.reScalaResource.path);
-        for (let path of paths) {
-            let node = get(this.pathStructureRoot);
-            for (let section of path.slice(0, -1)) {
-                if (!node.children.some(x => x.label === section)) {
-                    node.children.push({ label: section, shown: true, children: [] });
-                }
-                node = node.children.find(x => x.label === section);
-            }
-        }
-        this.pathStructureRoot.update(x => x);
+	onGraphChange() {
+		if (!this.graphHasChanged) return;
 
-        this.reconcile();
+		const paths = this.graph.nodes.map(x => x.reScalaResource.path);
+		for (const path of paths) {
+			let node = get(this.pathStructureRoot);
+			for (const section of path.slice(0, -1)) {
+				if (!node.children.some(x => x.label === section)) {
+					node.children.push({ label: section, shown: true, children: [] });
+				}
+				node = node.children.find(x => x.label === section);
+			}
+		}
+		this.pathStructureRoot.update(x => x);
 
-        let shouldCenter = this.layout.nodes.length > 0 && !this.hasCenteredOnce;
-        if (shouldCenter) {
-            this.center();
-            this.hasCenteredOnce = true;
-        }
+		this.reconcile();
 
-        this.graphHasChanged = false;
-    }
+		const shouldCenter = this.layout.nodes.length > 0 && !this.hasCenteredOnce;
+		if (shouldCenter) {
+			this.center();
+			this.hasCenteredOnce = true;
+		}
 
-    reconcile() {
-        this.layout.reconcile();
-        this.layout.layOut();
+		this.graphHasChanged = false;
+	}
 
-        let hitNodes = new Set<RenderedNode>();
-        let hitEdges = new Set<RenderedEdge>();
+	reconcile() {
+		this.layout.reconcile();
+		this.layout.layOut();
 
-        for (let layoutNode of this.layout.nodes) {
-            let node = this.renderedNodes.find(x => x.layoutNode === layoutNode || (x.layoutNode.node && x.layoutNode.node.id === layoutNode.node?.id));
-            if (!node) {
-                node = new RenderedNode(layoutNode, this);
-                this.renderedNodes.push(node);
-            } else {
-                node.layoutNode = layoutNode;
-            }
+		const hitNodes = new Set<RenderedNode>();
+		const hitEdges = new Set<RenderedEdge>();
 
-            this.layoutToRenderedNode.set(layoutNode, node);
-            node.exitCompletion.target = 0;
-            hitNodes.add(node);
-        }
+		for (const layoutNode of this.layout.nodes) {
+			let node = this.renderedNodes.find(x =>
+				x.layoutNode === layoutNode
+				|| (x.layoutNode.node && x.layoutNode.node.id === layoutNode.node?.id)
+			);
+			if (!node) {
+				node = new RenderedNode(layoutNode, this);
+				this.renderedNodes.push(node);
+			} else {
+				node.layoutNode = layoutNode;
+			}
 
-        for (let node of this.renderedNodes) {
-            if (node.layoutNode.isDummy) continue;
-            
-            for (let child of node.out) {
-                let current = child;
-                let waypoints = [node];
+			this.layoutToRenderedNode.set(layoutNode, node);
+			node.exitCompletion.target = 0;
+			hitNodes.add(node);
+		}
 
-                while (current.layoutNode.isDummy) {
-                    waypoints.push(current);
-                    current = current.out[0];
-                }
-                waypoints.push(current);
+		for (const node of this.renderedNodes) {
+			if (node.layoutNode.isDummy) continue;
 
-                let edge = this.renderedEdges.find(x => x[0] === waypoints[0] && x[1] === waypoints.at(-1));
-                if (edge) {
-                    edge.waypoints = waypoints;
-                } else {
-                    edge = new RenderedEdge(waypoints.at(0), waypoints.at(-1));
-                    edge.waypoints = waypoints;
-                    this.renderedEdges.push(edge);
-                    edge.tweenedPath.target = edge.computePath();
-                }
+			for (const child of node.out) {
+				let current = child;
+				const waypoints = [node];
 
-                edge.visibility.target = 1;
-                edge.tweenedPath.target = edge.computePath(Infinity);
-                hitEdges.add(edge);
-            }
-        }
+				while (current.layoutNode.isDummy) {
+					waypoints.push(current);
+					current = current.out[0];
+				}
+				waypoints.push(current);
 
-        for (let edge of this.renderedEdges) {
-            if (hitEdges.has(edge)) continue;
+				let edge = this.renderedEdges.find(x => x[0] === waypoints[0] && x[1] === waypoints.at(-1));
+				if (edge) {
+					edge.waypoints = waypoints;
+				} else {
+					edge = new RenderedEdge(waypoints.at(0), waypoints.at(-1));
+					edge.waypoints = waypoints;
+					this.renderedEdges.push(edge);
+					edge.tweenedPath.target = edge.computePath();
+				}
 
-            edge.visibility.target = 0;
-            edge.tweenedPath.target = edge.computePath(Infinity);
-        }
+				edge.visibility.target = 1;
+				edge.tweenedPath.target = edge.computePath(Infinity);
+				hitEdges.add(edge);
+			}
+		}
 
-        for (let node of this.renderedNodes) {
-            if (hitNodes.has(node)) continue;
+		for (const edge of this.renderedEdges) {
+			if (hitEdges.has(edge)) continue;
 
-            node.exitCompletion.target = 1;
-        }
+			edge.visibility.target = 0;
+			edge.tweenedPath.target = edge.computePath(Infinity);
+		}
 
-        if (this.layout.nodes.some(x => this.layoutToRenderedNode.get(x) === get(this.selectedNode))) {
-            this.computeSelectedNodeSubtree();
-        } else {
-            this.selectedNode.set(null);
-        }
-    }
+		for (const node of this.renderedNodes) {
+			if (hitNodes.has(node)) continue;
 
-    supplyMousePosition(position: Point) {
-        this.mousePosition = position;
-    }
+			node.exitCompletion.target = 1;
+		}
 
-    getNodesOverlappingWithMouse() {
-        let nodes: RenderedNode[] = [];
-        let mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
-        let mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
+		if (this.layout.nodes.some(x => this.layoutToRenderedNode.get(x) === get(this.selectedNode))) {
+			this.computeSelectedNodeSubtree();
+		} else {
+			this.selectedNode.set(null);
+		}
+	}
 
-        for (let node of this.renderedNodes) {
-            if (node.layoutNode.isDummy) continue;
+	supplyMousePosition(position: Point) {
+		this.mousePosition = position;
+	}
 
-            let minPos = node.visualPosition();
-            let maxPos = structuredClone(minPos);
-            maxPos.x += NODE_WIDTH;
-            maxPos.y += NODE_HEIGHT;
+	getNodesOverlappingWithMouse() {
+		const nodes: RenderedNode[] = [];
+		const mouseX = (this.mousePosition.x - this.originX) / get(this.scale);
+		const mouseY = (this.mousePosition.y - this.originY) / get(this.scale);
 
-            if (
-                mouseX >= minPos.x
+		for (const node of this.renderedNodes) {
+			if (node.layoutNode.isDummy) continue;
+
+			const minPos = node.visualPosition();
+			const maxPos = structuredClone(minPos);
+			maxPos.x += NODE_WIDTH;
+			maxPos.y += NODE_HEIGHT;
+
+			if (
+				mouseX >= minPos.x
                 && mouseX < maxPos.x
                 && mouseY >= minPos.y
                 && mouseY < maxPos.y
-            ) {
-                nodes.push(node);
-            }
-        }
+			) {
+				nodes.push(node);
+			}
+		}
 
-        return nodes;
-    }
+		return nodes;
+	}
 
-    checkHover() {
-        let newNode = this.getNodesOverlappingWithMouse()[0] ?? null;
-        this.hoveredNode.set(newNode);
-    }
+	checkHover() {
+		const newNode = this.getNodesOverlappingWithMouse()[0] ?? null;
+		this.hoveredNode.set(newNode);
+	}
 
-    tryToSelect() {
-        let candidates = this.getNodesOverlappingWithMouse();
-        if (candidates.length === 0) {
-            this.selectedNode.set(null);
-            return;
-        }
+	tryToSelect() {
+		const candidates = this.getNodesOverlappingWithMouse();
+		if (candidates.length === 0) {
+			this.selectedNode.set(null);
+			return;
+		}
 
-        let node = candidates[0];
-        this.selectedNode.set(node);
-        this.computeSelectedNodeSubtree();
-    }
+		const node = candidates[0];
+		this.selectedNode.set(node);
+		this.computeSelectedNodeSubtree();
+	}
 
-    computeSelectedNodeSubtree() {
-        let node = get(this.selectedNode);
-        if (!node) return;
+	computeSelectedNodeSubtree() {
+		const node = get(this.selectedNode);
+		if (!node) return;
 
-        this.selectedNodeSubtree = new WeakSet();
+		this.selectedNodeSubtree = new WeakSet();
 
-        let forwardsQueue = [node];
-        let backwardsQueue = [node];
-        while (forwardsQueue.length > 0) {
-            let nextNode = forwardsQueue.pop();
-            this.selectedNodeSubtree.add(nextNode);
-            forwardsQueue.push(...nextNode.out);
-        }
-        while (backwardsQueue.length > 0) {
-            let nextNode = backwardsQueue.pop();
-            this.selectedNodeSubtree.add(nextNode);
-            backwardsQueue.push(...nextNode.in);
-        }
-    }
+		const forwardsQueue = [node];
+		const backwardsQueue = [node];
+		while (forwardsQueue.length > 0) {
+			const nextNode = forwardsQueue.pop();
+			this.selectedNodeSubtree.add(nextNode);
+			forwardsQueue.push(...nextNode.out);
+		}
+		while (backwardsQueue.length > 0) {
+			const nextNode = backwardsQueue.pop();
+			this.selectedNodeSubtree.add(nextNode);
+			backwardsQueue.push(...nextNode.in);
+		}
+	}
 
-    center() {
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
+	center() {
+		let minX = Infinity;
+		let minY = Infinity;
+		let maxX = -Infinity;
+		let maxY = -Infinity;
 
-        for (let node of this.renderedNodes) {
-            let pos = node.computePosition();
+		for (const node of this.renderedNodes) {
+			const pos = node.computePosition();
 
-            minX = Math.min(minX, pos.x);
-            minY = Math.min(minY, pos.y);
-            maxX = Math.max(maxX, pos.x + NODE_WIDTH);
-            maxY = Math.max(maxY, pos.y + NODE_HEIGHT);
-        }
+			minX = Math.min(minX, pos.x);
+			minY = Math.min(minY, pos.y);
+			maxX = Math.max(maxX, pos.x + NODE_WIDTH);
+			maxY = Math.max(maxY, pos.y + NODE_HEIGHT);
+		}
 
-        if (minX > maxX) return; // Empty AABB
+		if (minX > maxX) return; // Empty AABB
 
-        let centerX = (minX + maxX) / 2;
-        let centerY = (minY + maxY) / 2;
-        let width = 1.2 * (maxX - minX); // With added margin
-        let height = 1.2 * (maxY - minY);
+		const centerX = (minX + maxX) / 2;
+		const centerY = (minY + maxY) / 2;
+		const width = 1.2 * (maxX - minX); // With added margin
+		const height = 1.2 * (maxY - minY);
 
-        this.scale.update(x => clamp(
-            Math.min(window.innerWidth / width, window.innerHeight / height),
-            MIN_SCALE,
-            1
-        ));
-        this.originX = window.innerWidth/2 - centerX * get(this.scale);
-        this.originY = window.innerHeight/2 - centerY * get(this.scale);
-    }
+		this.scale.update(() => clamp(
+			Math.min(window.innerWidth / width, window.innerHeight / height),
+			MIN_SCALE,
+			1
+		));
+		this.originX = window.innerWidth/2 - centerX * get(this.scale);
+		this.originY = window.innerHeight/2 - centerY * get(this.scale);
+	}
 }

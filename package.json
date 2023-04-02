@@ -9,6 +9,7 @@
     "@tsconfig/svelte": "^3.0.0",
     "@types/node": "^18.11.18",
     "autoprefixer": "^10.4.13",
+    "eslint-plugin-svelte3": "^4.0.0",
     "postcss": "^8.4.20",
     "rollup-plugin-watch": "^1.0.2",
     "svelte": "^3.55.0",
@@ -19,6 +20,9 @@
   },
   "dependencies": {
     "@iconify/svelte": "^3.1.0",
-    "@types/chrome": "^0.0.217"
+    "@types/chrome": "^0.0.217",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "eslint": "^8.37.0"
   }
 }

@@ -3,46 +3,46 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --elevation-0: 255 255 255;
-        --elevation-1: 241 243 244;
-        --elevation-2: 203 205 209;
-        --elevation-3: 156 163 175;
-        --highlight-1: 59 130 246;
-        --hover-1: 229 231 235;
-        --hover-2: 229 231 235;
-        --hover-strong: 0 0 0;
-        --border-1: 203 205 209;
-        --boolean: 249 115 22;
-        --number: 14 165 233;
-        --string: 16 185 129;
-        --instance: 132 204 22;
-        --list: 234 179 8;
-        --dom-element: 145 95 220;
-    }
+	:root {
+		--elevation-0: 255 255 255;
+		--elevation-1: 241 243 244;
+		--elevation-2: 203 205 209;
+		--elevation-3: 156 163 175;
+		--highlight-1: 59 130 246;
+		--hover-1: 229 231 235;
+		--hover-2: 229 231 235;
+		--hover-strong: 0 0 0;
+		--border-1: 203 205 209;
+		--boolean: 249 115 22;
+		--number: 14 165 233;
+		--string: 16 185 129;
+		--instance: 132 204 22;
+		--list: 234 179 8;
+		--dom-element: 145 95 220;
+	}
 
-    body {
-        font-family: sans-serif;
-        overflow: hidden;
-        user-select: none;
-    }
+	body {
+		font-family: sans-serif;
+		overflow: hidden;
+		user-select: none;
+	}
 
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --elevation-0: 32 33 36;
-            --elevation-1: 41 42 45;
-            --elevation-2: 63 63 70;
-            --elevation-3: 82 82 91;
-            --highlight-1: 59 130 246;
-            --hover-1: 39 39 42;
-            --hover-2: 82 82 91;
-            --hover-strong: 255 255 255;
-            --border-1: 63 63 70;
-        }
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--elevation-0: 32 33 36;
+			--elevation-1: 41 42 45;
+			--elevation-2: 63 63 70;
+			--elevation-3: 82 82 91;
+			--highlight-1: 59 130 246;
+			--hover-1: 39 39 42;
+			--hover-2: 82 82 91;
+			--hover-strong: 255 255 255;
+			--border-1: 63 63 70;
+		}
 
-        body {
-            color-scheme: dark;
-            color: white;
-        }
-    }
+		body {
+			color-scheme: dark;
+			color: white;
+		}
+	}
 }
