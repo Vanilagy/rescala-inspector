@@ -13,3 +13,8 @@ This project can not be used to change the state of the REScala application, but
 ## Implementation
 The inspector is implemented using a force-based graph layout rendered in an HTML canvas. The UI elements are
 implemented in Svelte. The core code can be found in `extension/panel`.
+
+## Setup & Installation
+Within the cloned repo, run `npm install` to install all of the required dependencies. Then, to bundle the code into
+useable JavaScript, run `npm run watch`. The resulting `dist` folder can be directly loaded as an unpacked extension
+by the Chromium DevTools with developer mode on.
