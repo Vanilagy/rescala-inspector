@@ -99,6 +99,8 @@ export class Graph extends Emitter<{
 			};
 			if (this.nodes.some(x => x.id === newNode.id)) throw new Error('Node already exists!');
 			this.addNode(newNode);
+
+			if (event.value) newNode.value = parseReScalaValue(event.value);
 		} else if (event.type === 'Discover') {
 			const n1 = this.nodes.find(x => x.id === event.source.idCounter);
 			const n2 = this.nodes.find(x => x.id === event.sink.idCounter);
