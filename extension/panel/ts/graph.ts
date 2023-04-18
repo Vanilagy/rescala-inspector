@@ -97,14 +97,23 @@ export class Graph extends Emitter<{
 				value: parseReScalaValue(event.value),
 				reScalaResource: event.resource
 			};
-			if (this.nodes.some(x => x.id === newNode.id)) throw new Error('Node already exists!');
+
+			if (this.nodes.some(x => x.id === newNode.id)) {
+				console.warn('Node already exists!');
+				return;
+			}
+
 			this.addNode(newNode);
 
 			if (event.value) newNode.value = parseReScalaValue(event.value);
 		} else if (event.type === 'Discover') {
 			const n1 = this.nodes.find(x => x.id === event.source.idCounter);
 			const n2 = this.nodes.find(x => x.id === event.sink.idCounter);
-			if (!n1 || !n2) throw new Error('Missing node(s)!');
+
+			if (!n1 || !n2) {
+				console.warn('Missing node(s)!');
+				return;
+			}
 
 			if (this.edges.some(x => x[0] === n1 && x[1] === n2)) return;
 			this.addEdge(n1, n2);
@@ -116,10 +125,18 @@ export class Graph extends Emitter<{
 		} else if (event.type === 'Drop') {
 			const n1 = this.nodes.find(x => x.id === event.source.idCounter);
 			const n2 = this.nodes.find(x => x.id === event.sink.idCounter);
-			if (!n1 || !n2) throw new Error('Missing node(s)!');
+
+			if (!n1 || !n2) {
+				console.warn('Missing node(s)!');
+				return;
+			}
 
 			const edge = this.edges.find(x => x[0] === n1 && x[1] === n2);
-			if (!edge) throw new Error('Attempted to drop edge that didn\'t exist!');
+			if (!edge) {
+				console.warn('Attempted to drop edge that didn\'t exist!');
+				return;
+			}
+
 			this.removeEdge(edge);
 		}
 	}
@@ -127,16 +144,27 @@ export class Graph extends Emitter<{
 	undoReScalaEvent(event: ReScalaEvent) {
 		if (event.type === 'Create') {
 			const node = this.nodes.find(x => x.id === event.resource.idCounter);
-			if (!node) throw new Error('Missing node!');
+			if (!node) {
+				console.warn('Missing node!');
+				return;
+			}
 
 			this.removeNode(node);
 		} else if (event.type === 'Discover') {
 			const n1 = this.nodes.find(x => x.id === event.source.idCounter);
 			const n2 = this.nodes.find(x => x.id === event.sink.idCounter);
-			if (!n1 || !n2) throw new Error('Missing node(s)!');
+
+			if (!n1 || !n2) {
+				console.warn('Missing node(s)!');
+				return;
+			}
 
 			const edge = this.edges.find(x => x[0] === n1 && x[1] === n2);
-			if (!edge) throw new Error('Attempted to drop edge that didn\'t exist!');
+			if (!edge) {
+				console.warn('Attempted to drop edge that didn\'t exist!');
+				return;
+			}
+
 			this.removeEdge(edge);
 		} else if (event.type === 'Value') {
 			const eventIndex = get(this.history).indexOf(event);
@@ -153,7 +181,11 @@ export class Graph extends Emitter<{
 		} else if (event.type === 'Drop') {
 			const n1 = this.nodes.find(x => x.id === event.source.idCounter);
 			const n2 = this.nodes.find(x => x.id === event.sink.idCounter);
-			if (!n1 || !n2) throw new Error('Missing node(s)!');
+
+			if (!n1 || !n2) {
+				console.warn('Missing node(s)!');
+				return;
+			}
 
 			if (this.edges.some(x => x[0] === n1 && x[1] === n2)) return;
 			this.addEdge(n1, n2);
