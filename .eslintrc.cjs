@@ -24,7 +24,7 @@ module.exports = {
 			processor: 'svelte3/svelte3'
 		}
 	],
-	'ignorePatterns': ['.eslintrc.cjs'],
+	'ignorePatterns': ['.eslintrc.cjs', 'dist/**/*'],
 	'rules': {
 		'@typescript-eslint/indent': ['warn', 'tab'],
 		'linebreak-style': ['warn', 'unix'],

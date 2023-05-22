@@ -80,7 +80,7 @@ export class RenderedNode {
 	}
 
 	visualHeight(time?: number) {
-		return lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.entryCompletion.valueAt(time));
+		return this.layoutNode.height * lerp(NODE_HEIGHT/2, NODE_HEIGHT, this.entryCompletion.valueAt(time));
 	}
 
 	visualCenter(time?: number) {

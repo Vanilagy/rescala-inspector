@@ -361,6 +361,7 @@ export class LayoutGraph {
 		// and ensure connected components have visible space between them.
 		for (const node of this.nodes) {
 			if (!node.neighbor) continue;
+
 			const dist = node.neighbor.x - (node.x + node.height);
 			const wanted = 1;
 			const delta = Math.max(wanted - dist, 0);
