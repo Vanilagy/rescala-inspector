@@ -11,7 +11,7 @@ as a Chromium DevTools extension. Features of the inspector include:
 This project can not be used to change the state of the REScala application, but it can be used to inspect and debug it.
 
 ## Implementation
-The inspector is implemented using a force-based graph layout rendered in an HTML canvas. The UI elements are
+The inspector is implemented using a force-directed graph layout rendered in an HTML canvas. The UI elements are
 implemented in Svelte. The core code can be found in `extension/panel`.
 
 ## Setup & Installation
