@@ -124,7 +124,7 @@ export class Emitter<T extends Record<string, unknown>> {
 		const fns = this.listeners.get(type);
 		if (!fns) return;
 
-		for (const fn of fns) fn(data);
+		for (const fn of fns) fn(data[0];
 	}
 
 	on<K extends keyof T>(type: K, callback: (data: T[K]) => void) {
